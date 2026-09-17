@@ -7,6 +7,24 @@ import (
 	"sync"
 )
 
+// Progress is an immutable snapshot of batch hashing progress. Snapshots are
+// delivered to BatchOptions.Progress from worker goroutines; the snapshot
+// never aliases internal state and may be retained by the receiver.
+//
+// Progress follows a small state machine:
+//
+//   - Starting a file sets CurrentPath and CurrentSize and resets CurrentBytes
+//     to zero.
+//   - While the file is hashed, CurrentBytes grows monotonically up to
+//     CurrentSize. CompletedBytes deliberately excludes the in-flight file, so
+//     CompletedBytes+CurrentBytes is the number of bytes hashed so far.
+//   - Completing a file, successfully or not, increments CompletedFiles, adds
+//     the file's read bytes to CompletedBytes and resets CurrentBytes to zero.
+//     CurrentPath keeps naming the file that just finished until another file
+//     starts.
+//
+// TotalBytes is the sum of the sizes known when the batch started; files whose
+// size could not be determined contribute zero.
 type Progress struct {
 	CompletedFiles int
 	TotalFiles     int
@@ -42,7 +60,7 @@ func HashFiles(ctx context.Context, requests []FileRequest, options BatchOptions
 	}
 	workers := options.Workers
 	if workers <= 0 {
-		workers = minInt(4, runtime.GOMAXPROCS(0))
+		workers = min(4, runtime.GOMAXPROCS(0))
 	}
 	if workers > len(requests) {
 		workers = len(requests)
@@ -61,9 +79,7 @@ func HashFiles(ctx context.Context, requests []FileRequest, options BatchOptions
 	jobs := make(chan int)
 	var group sync.WaitGroup
 	group.Add(workers)
-	var stateMu sync.Mutex
-	completedFiles := 0
-	var completedBytes int64
+	tracker := &progressTracker{progress: Progress{TotalFiles: len(requests), TotalBytes: totalBytes}}
 	for worker := 0; worker < workers; worker++ {
 		go func() {
 			defer group.Done()
@@ -73,38 +89,25 @@ func HashFiles(ctx context.Context, requests []FileRequest, options BatchOptions
 					results[index] = FileResult{Request: request, Err: err}
 					continue
 				}
-				stateMu.Lock()
-				emitProgress(options.Progress, Progress{TotalFiles: len(requests), TotalBytes: totalBytes, CurrentPath: request.Path})
-				stateMu.Unlock()
+				emitProgress(options.Progress, tracker.update(func(progress *Progress) {
+					progress.CurrentPath = request.Path
+					progress.CurrentBytes = 0
+					progress.CurrentSize = fileSizes[index]
+				}))
 
 				hashOptions := options.HashOptions
 				hashOptions.Progress = func(bytesRead int64) {
-					stateMu.Lock()
-					emitProgress(options.Progress, Progress{
-						CompletedFiles: completedFiles,
-						TotalFiles:     len(requests),
-						CompletedBytes: completedBytes,
-						TotalBytes:     totalBytes,
-						CurrentPath:    request.Path,
-						CurrentBytes:   bytesRead,
-						CurrentSize:    fileSizes[index],
-					})
-					stateMu.Unlock()
+					emitProgress(options.Progress, tracker.update(func(progress *Progress) {
+						progress.CurrentBytes = bytesRead
+					}))
 				}
 				result, err := HashFileWithOptions(ctx, request.Path, request.Algorithms, hashOptions)
 				results[index] = FileResult{Request: request, Result: result, Err: err}
-				stateMu.Lock()
-				completedFiles++
-				completedBytes += result.BytesRead
-				emitProgress(options.Progress, Progress{
-					CompletedFiles: completedFiles,
-					TotalFiles:     len(requests),
-					CompletedBytes: completedBytes,
-					TotalBytes:     totalBytes,
-					CurrentPath:    request.Path,
-					CurrentSize:    result.Size,
-				})
-				stateMu.Unlock()
+				emitProgress(options.Progress, tracker.update(func(progress *Progress) {
+					progress.CompletedFiles++
+					progress.CompletedBytes += result.BytesRead
+					progress.CurrentBytes = 0
+				}))
 				if err != nil && options.FailFast {
 					cancel()
 				}
@@ -127,11 +130,22 @@ func HashFiles(ctx context.Context, requests []FileRequest, options BatchOptions
 	return results
 }
 
-func minInt(left, right int) int {
-	if left < right {
-		return left
-	}
-	return right
+// progressTracker serializes progress updates so that the shared counters stay
+// consistent. The user callback is always invoked after the lock is released:
+// a slow or re-entrant callback therefore cannot stall the workers or deadlock
+// the batch. Callbacks may run concurrently with one another, so receivers
+// must be safe for concurrent use.
+type progressTracker struct {
+	mu       sync.Mutex
+	progress Progress
+}
+
+func (tracker *progressTracker) update(mutate func(*Progress)) Progress {
+	tracker.mu.Lock()
+	mutate(&tracker.progress)
+	snapshot := tracker.progress
+	tracker.mu.Unlock()
+	return snapshot
 }
 
 func emitProgress(callback func(Progress), progress Progress) {

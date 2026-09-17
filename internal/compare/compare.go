@@ -3,11 +3,11 @@ package compare
 import (
 	"bufio"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	"hash/internal/engine"
+	"hash/internal/pathutil"
 )
 
 const maxRecords = 100_000
@@ -24,7 +24,6 @@ type Summary struct {
 	Missing    int
 	Unexpected int
 	Duplicates int
-	Invalid    int
 	Exact      bool
 }
 
@@ -169,7 +168,7 @@ func Compare(expected, actual []Record) Summary {
 			summary.Unexpected++
 		}
 	}
-	summary.Exact = summary.Mismatches == 0 && summary.Missing == 0 && summary.Unexpected == 0 && summary.Duplicates == 0 && summary.Invalid == 0
+	summary.Exact = summary.Mismatches == 0 && summary.Missing == 0 && summary.Unexpected == 0 && summary.Duplicates == 0
 	return summary
 }
 
@@ -188,6 +187,5 @@ func index(records []Record) (map[string]string, int) {
 }
 
 func normalizePath(path string) string {
-	cleaned := filepath.Clean(strings.TrimSpace(path))
-	return strings.ToLower(cleaned)
+	return pathutil.Key(strings.TrimSpace(path))
 }

@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"hash/internal/engine"
+	"hash/internal/pathutil"
 	"hash/internal/registry"
 )
 
@@ -222,7 +223,7 @@ func validateOutputPath(output string, inputs []string) error {
 	}
 	for _, input := range inputs {
 		inputAbs, absErr := filepath.Abs(input)
-		if absErr == nil && pathKey(inputAbs) == pathKey(outputAbs) {
+		if absErr == nil && pathutil.Key(inputAbs) == pathutil.Key(outputAbs) {
 			return fmt.Errorf("output path must differ from input %q", input)
 		}
 	}

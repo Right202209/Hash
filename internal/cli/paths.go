@@ -6,9 +6,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
+
+	"hash/internal/pathutil"
 )
 
 func ExpandPaths(inputs []string, recursive, literal bool) ([]string, error) {
@@ -24,7 +25,7 @@ func ExpandPaths(inputs []string, recursive, literal bool) ([]string, error) {
 		}
 		for _, match := range matches {
 			cleaned := filepath.Clean(match)
-			key := pathKey(cleaned)
+			key := pathutil.Key(cleaned)
 			if _, exists := seen[key]; exists {
 				continue
 			}
@@ -101,14 +102,6 @@ func filterFiles(paths []string) ([]string, error) {
 	}
 	sort.Strings(files)
 	return files, nil
-}
-
-func pathKey(path string) string {
-	cleaned := filepath.Clean(path)
-	if runtime.GOOS == "windows" {
-		return strings.ToLower(cleaned)
-	}
-	return cleaned
 }
 
 func hasMeta(path string) bool {

@@ -26,18 +26,15 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	linkInfo, err := os.Lstat(path)
-	if err != nil {
-		return Result{}, fmt.Errorf("inspect %q: %w", path, err)
-	}
-	if !linkInfo.Mode().IsRegular() {
-		return Result{}, fmt.Errorf("hash input %q is not a regular file", path)
-	}
 	bufferSize := options.BufferSize
 	if bufferSize <= 0 {
 		bufferSize = defaultBufferSize
 	}
 
+	// Open before inspecting: the returned file descriptor is authoritative,
+	// so there is no window between a path-based regular-file check and the
+	// read in which the path could be replaced. Symbolic links are followed,
+	// matching the CLI's path expansion; non-regular targets are rejected.
 	file, err := os.Open(path)
 	if err != nil {
 		return Result{}, fmt.Errorf("open %q: %w", path, err)
@@ -47,6 +44,9 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 	before, err := file.Stat()
 	if err != nil {
 		return Result{}, fmt.Errorf("stat %q: %w", path, err)
+	}
+	if !before.Mode().IsRegular() {
+		return Result{}, fmt.Errorf("hash input %q is not a regular file", path)
 	}
 	digesters := make([]hash.Hash, len(algorithms))
 	writers := make([]io.Writer, len(digesters))
