@@ -25,6 +25,9 @@ const (
 	ExitCanceled = 3
 )
 
+// ErrUnsupportedFormat is returned when --format names an unknown encoding.
+var ErrUnsupportedFormat = errors.New("unsupported output format")
+
 type Config struct {
 	Algorithms   []string
 	All          bool
@@ -77,14 +80,15 @@ func run(ctx context.Context, config Config, stdout, stderr io.Writer) int {
 // output file is only touched once formatting has succeeded, so a formatting
 // failure cannot truncate an existing file.
 func writeResults(stdout io.Writer, config Config, paths []string, results []engine.FileResult, algorithms []string) error {
+	options := FormatOptions{Format: config.Format, ShowSize: config.ShowSize, ShowModified: config.ShowModified, UTC: config.UTC}
 	if config.Output == "" {
-		if err := WriteResults(stdout, results, algorithms, config.Format, config.ShowSize, config.ShowModified, config.UTC); err != nil {
+		if err := WriteResults(stdout, results, algorithms, options); err != nil {
 			return fmt.Errorf("write results: %w", err)
 		}
 		return nil
 	}
 	var buffer bytes.Buffer
-	if err := WriteResults(&buffer, results, algorithms, config.Format, config.ShowSize, config.ShowModified, config.UTC); err != nil {
+	if err := WriteResults(&buffer, results, algorithms, options); err != nil {
 		return fmt.Errorf("write results: %w", err)
 	}
 	if err := atomicfile.Write(config.Output, paths, buffer.Bytes()); err != nil {
@@ -129,7 +133,7 @@ func Parse(args []string, usage io.Writer) (Config, error) {
 		return Config{}, errors.New("workers cannot be negative")
 	}
 	if *format != "text" && *format != "tsv" && *format != "json" {
-		return Config{}, fmt.Errorf("unsupported output format %q", *format)
+		return Config{}, fmt.Errorf("%w %q", ErrUnsupportedFormat, *format)
 	}
 	return Config{
 		Algorithms:   splitAlgorithms(*algorithmList),
@@ -156,24 +160,12 @@ func SelectAlgorithms(config Config) ([]string, error) {
 		}
 		return selected, nil
 	}
-	if len(config.Algorithms) == 0 {
-		return nil, errors.New("at least one algorithm is required")
-	}
 	selected := make([]string, 0, len(config.Algorithms))
-	seen := make(map[string]struct{}, len(config.Algorithms))
 	for _, name := range config.Algorithms {
-		name = strings.ToLower(strings.TrimSpace(name))
-		if name == "" {
-			return nil, errors.New("algorithm name cannot be empty")
-		}
-		if _, ok := registry.Lookup(name); !ok {
-			return nil, fmt.Errorf("unknown algorithm %q", name)
-		}
-		if _, ok := seen[name]; ok {
-			return nil, fmt.Errorf("algorithm %q was selected more than once", name)
-		}
-		seen[name] = struct{}{}
-		selected = append(selected, name)
+		selected = append(selected, strings.ToLower(strings.TrimSpace(name)))
+	}
+	if err := engine.ValidateAlgorithms(selected); err != nil {
+		return nil, err
 	}
 	return selected, nil
 }

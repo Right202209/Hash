@@ -12,9 +12,12 @@ import (
 	"hash/internal/pathutil"
 )
 
+// ErrNoInput is returned when no file path or pattern was provided.
+var ErrNoInput = errors.New("at least one file path or pattern is required")
+
 func ExpandPaths(inputs []string, recursive, literal bool) ([]string, error) {
 	if len(inputs) == 0 {
-		return nil, errors.New("at least one file path or pattern is required")
+		return nil, ErrNoInput
 	}
 	paths := make([]string, 0, len(inputs))
 	seen := make(map[string]struct{})

@@ -205,7 +205,7 @@ func buildCompletedRun(results []engine.FileResult, algorithms []string) complet
 		}
 	}
 	var builder strings.Builder
-	if err := cli.WriteResults(&builder, results, algorithms, "text", true, true, false); err != nil {
+	if err := cli.WriteResults(&builder, results, algorithms, cli.FormatOptions{Format: "text", ShowSize: true, ShowModified: true}); err != nil {
 		run.formatErr = fmt.Errorf("format results: %w", err)
 		return run
 	}

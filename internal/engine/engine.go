@@ -8,19 +8,31 @@ import (
 	"hash"
 	"io"
 	"os"
-	"sort"
 
 	"hash/internal/registry"
 )
 
 const defaultBufferSize = 1024 * 1024
 
+// Errors returned by request validation. They are sentinels so callers can
+// match them with errors.Is.
+var (
+	// ErrNoAlgorithms is returned when a request selects no algorithms.
+	ErrNoAlgorithms = errors.New("at least one algorithm is required")
+	// ErrEmptyAlgorithmName is returned for an empty algorithm name.
+	ErrEmptyAlgorithmName = errors.New("algorithm name cannot be empty")
+	// ErrUnknownAlgorithm is returned for a name that is not registered.
+	ErrUnknownAlgorithm = errors.New("unknown algorithm")
+	// ErrDuplicateAlgorithm is returned when a name is selected more than once.
+	ErrDuplicateAlgorithm = errors.New("duplicate algorithm")
+)
+
 func HashFile(ctx context.Context, path string, algorithms []string) (Result, error) {
 	return HashFileWithOptions(ctx, path, algorithms, Options{})
 }
 
 func HashFileWithOptions(ctx context.Context, path string, algorithms []string, options Options) (Result, error) {
-	if err := validateRequest(algorithms); err != nil {
+	if err := ValidateAlgorithms(algorithms); err != nil {
 		return Result{}, err
 	}
 	if err := ctx.Err(); err != nil {
@@ -56,6 +68,7 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 		writers[index] = digesters[index]
 	}
 
+	multiWriter := io.MultiWriter(writers...)
 	buffer := make([]byte, bufferSize)
 	var bytesRead int64
 	for {
@@ -64,7 +77,7 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 		}
 		count, readErr := file.Read(buffer)
 		if count > 0 {
-			if _, err := io.MultiWriter(writers...).Write(buffer[:count]); err != nil {
+			if _, err := multiWriter.Write(buffer[:count]); err != nil {
 				return Result{}, fmt.Errorf("hash %q: %w", path, err)
 			}
 			bytesRead += int64(count)
@@ -99,37 +112,26 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 		Digests:   digests,
 		Order:     append([]string(nil), algorithms...),
 		BytesRead: bytesRead,
-		Reads:     1,
 		Changed:   !os.SameFile(after, pathAfter) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()),
 	}, nil
 }
 
-func validateRequest(algorithms []string) error {
+func ValidateAlgorithms(algorithms []string) error {
 	if len(algorithms) == 0 {
-		return errors.New("at least one algorithm is required")
+		return ErrNoAlgorithms
 	}
 	seen := make(map[string]struct{}, len(algorithms))
 	for _, name := range algorithms {
 		if name == "" {
-			return errors.New("algorithm name cannot be empty")
+			return ErrEmptyAlgorithmName
 		}
 		if _, ok := registry.Lookup(name); !ok {
-			return fmt.Errorf("unknown algorithm %q", name)
+			return fmt.Errorf("%w %q", ErrUnknownAlgorithm, name)
 		}
 		if _, duplicate := seen[name]; duplicate {
-			return fmt.Errorf("algorithm %q was selected more than once", name)
+			return fmt.Errorf("%w %q", ErrDuplicateAlgorithm, name)
 		}
 		seen[name] = struct{}{}
 	}
 	return nil
-}
-
-func sortedAlgorithmNames() []string {
-	algorithms := registry.Algorithms()
-	names := make([]string, len(algorithms))
-	for index, algorithm := range algorithms {
-		names[index] = algorithm.Name
-	}
-	sort.Strings(names)
-	return names
 }

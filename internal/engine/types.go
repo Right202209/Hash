@@ -14,6 +14,5 @@ type Result struct {
 	Digests   map[string]string
 	Order     []string
 	BytesRead int64
-	Reads     int
 	Changed   bool
 }

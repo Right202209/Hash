@@ -11,112 +11,138 @@ import (
 	"hash/internal/engine"
 )
 
-func WriteResults(writer io.Writer, results []engine.FileResult, algorithms []string, format string, showSize, showModified, utc bool) error {
-	switch strings.ToLower(format) {
+// FormatOptions selects the output encoding and which optional columns are
+// included. It replaces the boolean parameter list that used to make call
+// sites unreadable.
+type FormatOptions struct {
+	Format       string
+	ShowSize     bool
+	ShowModified bool
+	UTC          bool
+}
+
+// row is the flattened, per-algorithm view used by the text and TSV encoders.
+// A failed file produces a single row with Err set.
+type row struct {
+	Algorithm string
+	Digest    string
+	Path      string
+	Err       error
+	Size      int64
+	Modified  time.Time
+}
+
+func WriteResults(writer io.Writer, results []engine.FileResult, algorithms []string, options FormatOptions) error {
+	switch strings.ToLower(options.Format) {
 	case "text":
-		return writeText(writer, results, algorithms, showSize, showModified, utc)
+		return writeText(writer, rowsFromResults(results, algorithms), options)
 	case "tsv":
-		return writeTSV(writer, results, algorithms, showSize, showModified, utc)
+		return writeTSV(writer, rowsFromResults(results, algorithms), options)
 	case "json":
-		return writeJSON(writer, results, algorithms, showSize, showModified, utc)
+		return writeJSON(writer, results, options)
 	default:
-		return fmt.Errorf("unsupported output format %q", format)
+		return fmt.Errorf("%w %q", ErrUnsupportedFormat, options.Format)
 	}
 }
 
-func writeText(writer io.Writer, results []engine.FileResult, algorithms []string, showSize, showModified, utc bool) error {
+func rowsFromResults(results []engine.FileResult, algorithms []string) []row {
+	rows := make([]row, 0, len(results))
 	for _, item := range results {
 		if item.Err != nil {
-			if _, err := fmt.Fprintf(writer, "ERROR\t%s\t%s\n", sanitize(item.Request.Path), sanitize(item.Err.Error())); err != nil {
+			rows = append(rows, row{Path: item.Request.Path, Err: item.Err})
+			continue
+		}
+		for _, algorithm := range algorithms {
+			rows = append(rows, row{
+				Algorithm: algorithm,
+				Digest:    item.Result.Digests[algorithm],
+				Path:      item.Result.Path,
+				Size:      item.Result.Size,
+				Modified:  item.Result.Modified,
+			})
+		}
+	}
+	return rows
+}
+
+func writeText(writer io.Writer, rows []row, options FormatOptions) error {
+	for _, item := range rows {
+		if item.Err != nil {
+			if _, err := fmt.Fprintf(writer, "ERROR\t%s\t%s\n", sanitize(item.Path), sanitize(item.Err.Error())); err != nil {
 				return err
 			}
 			continue
 		}
-		for _, algorithm := range algorithms {
-			if showSize || showModified {
-				if _, err := fmt.Fprintf(writer, "%s\t%s\t%s", algorithm, item.Result.Digests[algorithm], sanitize(item.Result.Path)); err != nil {
-					return err
-				}
-				if showSize {
-					if _, err := fmt.Fprintf(writer, "\tsize=%d", item.Result.Size); err != nil {
-						return err
-					}
-				}
-				if showModified {
-					if _, err := fmt.Fprintf(writer, "\tmodified=%s", formatTime(item.Result.Modified, utc)); err != nil {
-						return err
-					}
-				}
-				if _, err := fmt.Fprintln(writer); err != nil {
-					return err
-				}
-				continue
-			}
-			if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\n", algorithm, item.Result.Digests[algorithm], sanitize(item.Result.Path)); err != nil {
+		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s", item.Algorithm, item.Digest, sanitize(item.Path)); err != nil {
+			return err
+		}
+		if options.ShowSize {
+			if _, err := fmt.Fprintf(writer, "\tsize=%d", item.Size); err != nil {
 				return err
 			}
+		}
+		if options.ShowModified {
+			if _, err := fmt.Fprintf(writer, "\tmodified=%s", formatTime(item.Modified, options.UTC)); err != nil {
+				return err
+			}
+		}
+		if _, err := fmt.Fprintln(writer); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func writeTSV(writer io.Writer, results []engine.FileResult, algorithms []string, showSize, showModified, utc bool) error {
+func writeTSV(writer io.Writer, rows []row, options FormatOptions) error {
 	columns := []string{"algorithm", "digest", "path", "error"}
-	if showSize {
+	if options.ShowSize {
 		columns = append(columns, "size")
 	}
-	if showModified {
+	if options.ShowModified {
 		columns = append(columns, "modified")
 	}
 	if _, err := fmt.Fprintln(writer, strings.Join(columns, "\t")); err != nil {
 		return err
 	}
-	for _, item := range results {
+	for _, item := range rows {
+		values := make([]string, 0, len(columns))
 		if item.Err != nil {
-			values := []string{"ERROR", "", item.Request.Path, item.Err.Error()}
-			if showSize {
+			values = append(values, "ERROR", "", item.Path, item.Err.Error())
+			if options.ShowSize {
 				values = append(values, "-")
 			}
-			if showModified {
+			if options.ShowModified {
 				values = append(values, "-")
 			}
-			for index := range values {
-				values[index] = tsvValue(values[index])
+		} else {
+			values = append(values, item.Algorithm, item.Digest, item.Path, "")
+			if options.ShowSize {
+				values = append(values, strconv.FormatInt(item.Size, 10))
 			}
-			if _, err := fmt.Fprintln(writer, strings.Join(values, "\t")); err != nil {
-				return err
+			if options.ShowModified {
+				values = append(values, formatTime(item.Modified, options.UTC))
 			}
-			continue
 		}
-		for _, algorithm := range algorithms {
-			values := []string{algorithm, item.Result.Digests[algorithm], item.Result.Path, ""}
-			if showSize {
-				values = append(values, strconv.FormatInt(item.Result.Size, 10))
-			}
-			if showModified {
-				values = append(values, formatTime(item.Result.Modified, utc))
-			}
-			for index := range values {
-				values[index] = tsvValue(values[index])
-			}
-			if _, err := fmt.Fprintln(writer, strings.Join(values, "\t")); err != nil {
-				return err
-			}
+		for index := range values {
+			values[index] = tsvValue(values[index])
+		}
+		if _, err := fmt.Fprintln(writer, strings.Join(values, "\t")); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func writeJSON(writer io.Writer, results []engine.FileResult, algorithms []string, showSize, showModified, utc bool) error {
+func writeJSON(writer io.Writer, results []engine.FileResult, options FormatOptions) error {
 	output := make([]jsonResult, 0, len(results))
 	for _, item := range results {
 		entry := jsonResult{Path: item.Request.Path, Digests: item.Result.Digests, Error: errorString(item.Err)}
-		if showSize && item.Err == nil {
+		if options.ShowSize && item.Err == nil {
 			entry.Size = &item.Result.Size
 		}
-		if showModified && item.Err == nil {
+		if options.ShowModified && item.Err == nil {
 			modified := item.Result.Modified
-			if utc {
+			if options.UTC {
 				modified = modified.UTC()
 			}
 			entry.Modified = &modified

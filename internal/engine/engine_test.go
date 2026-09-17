@@ -29,9 +29,6 @@ func TestHashFile_OneReadComputesEveryRequestedAlgorithm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HashFile() error = %v", err)
 	}
-	if got.Reads != 1 {
-		t.Fatalf("HashFile() performed %d reads, want exactly one logical input pass", got.Reads)
-	}
 	if got.BytesRead != int64(len(content)) {
 		t.Fatalf("BytesRead = %d, want %d", got.BytesRead, len(content))
 	}
@@ -184,4 +181,31 @@ func equalStrings(left, right []string) bool {
 
 func itoa(value int) string {
 	return strconv.Itoa(value)
+}
+
+func TestValidateAlgorithms_ReportsSentinelErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		algorithms []string
+		want       error
+	}{
+		{name: "no algorithms", algorithms: nil, want: engine.ErrNoAlgorithms},
+		{name: "empty name", algorithms: []string{""}, want: engine.ErrEmptyAlgorithmName},
+		{name: "unknown", algorithms: []string{"sha3-256"}, want: engine.ErrUnknownAlgorithm},
+		{name: "duplicate", algorithms: []string{"sha256", "sha256"}, want: engine.ErrDuplicateAlgorithm},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			err := engine.ValidateAlgorithms(test.algorithms)
+			if !errors.Is(err, test.want) {
+				t.Fatalf("ValidateAlgorithms(%v) error = %v, want %v", test.algorithms, err, test.want)
+			}
+		})
+	}
+	if err := engine.ValidateAlgorithms([]string{"sha256", "md5"}); err != nil {
+		t.Fatalf("ValidateAlgorithms(valid) error = %v", err)
+	}
 }

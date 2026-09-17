@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +34,7 @@ func TestWriteResults_TSVHasStableColumnsAndEscapesFormula(t *testing.T) {
 		{Request: engine.FileRequest{Path: "=file.txt"}, Result: engine.Result{Path: "=file.txt", Digests: map[string]string{"sha256": "abc"}}},
 		{Request: engine.FileRequest{Path: "missing"}, Err: os.ErrNotExist},
 	}
-	if err := cli.WriteResults(&output, results, []string{"sha256"}, "tsv", true, true, true); err != nil {
+	if err := cli.WriteResults(&output, results, []string{"sha256"}, cli.FormatOptions{Format: "tsv", ShowSize: true, ShowModified: true, UTC: true}); err != nil {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
@@ -61,5 +62,19 @@ func TestParseAndSelectAlgorithms(t *testing.T) {
 	}
 	if strings.Join(algorithms, ",") != "sha256,md5" {
 		t.Fatalf("algorithms = %v", algorithms)
+	}
+}
+
+func TestExpandPaths_NoInputReturnsSentinel(t *testing.T) {
+	t.Parallel()
+	if _, err := cli.ExpandPaths(nil, false, false); !errors.Is(err, cli.ErrNoInput) {
+		t.Fatalf("ExpandPaths(nil) error = %v, want ErrNoInput", err)
+	}
+}
+
+func TestParse_UnsupportedFormatReturnsSentinel(t *testing.T) {
+	t.Parallel()
+	if _, err := cli.Parse([]string{"--format", "yaml", "file.bin"}, &bytes.Buffer{}); !errors.Is(err, cli.ErrUnsupportedFormat) {
+		t.Fatalf("Parse(--format yaml) error = %v, want ErrUnsupportedFormat", err)
 	}
 }
