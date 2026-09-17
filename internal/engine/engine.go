@@ -1,3 +1,5 @@
+// Package engine streams file contents through one or more hash algorithms and
+// orchestrates concurrent batch hashing.
 package engine
 
 import (
@@ -14,23 +16,26 @@ import (
 
 const defaultBufferSize = 1024 * 1024
 
-// Errors returned by request validation. They are sentinels so callers can
-// match them with errors.Is.
-var (
-	// ErrNoAlgorithms is returned when a request selects no algorithms.
-	ErrNoAlgorithms = errors.New("at least one algorithm is required")
-	// ErrEmptyAlgorithmName is returned for an empty algorithm name.
-	ErrEmptyAlgorithmName = errors.New("algorithm name cannot be empty")
-	// ErrUnknownAlgorithm is returned for a name that is not registered.
-	ErrUnknownAlgorithm = errors.New("unknown algorithm")
-	// ErrDuplicateAlgorithm is returned when a name is selected more than once.
-	ErrDuplicateAlgorithm = errors.New("duplicate algorithm")
-)
+// ErrNoAlgorithms is returned when a request selects no algorithms.
+var ErrNoAlgorithms = errors.New("at least one algorithm is required")
 
+// ErrEmptyAlgorithmName is returned for an empty algorithm name.
+var ErrEmptyAlgorithmName = errors.New("algorithm name cannot be empty")
+
+// ErrUnknownAlgorithm is returned for a name that is not registered.
+var ErrUnknownAlgorithm = errors.New("unknown algorithm")
+
+// ErrDuplicateAlgorithm is returned when a name is selected more than once.
+var ErrDuplicateAlgorithm = errors.New("duplicate algorithm")
+
+// HashFile hashes path with the default options.
 func HashFile(ctx context.Context, path string, algorithms []string) (Result, error) {
 	return HashFileWithOptions(ctx, path, algorithms, Options{})
 }
 
+// HashFileWithOptions hashes path, applying options. Symbolic links are followed
+// and the opened file descriptor is authoritative, so the regular-file check and
+// the read cannot be separated by a path swap.
 func HashFileWithOptions(ctx context.Context, path string, algorithms []string, options Options) (Result, error) {
 	if err := ValidateAlgorithms(algorithms); err != nil {
 		return Result{}, err
@@ -116,6 +121,10 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 	}, nil
 }
 
+// ValidateAlgorithms reports whether algorithms is a non-empty, duplicate-free
+// list of registered algorithm names. Names must already be normalized to the
+// lower-case registry form. The returned errors wrap ErrNoAlgorithms,
+// ErrEmptyAlgorithmName, ErrUnknownAlgorithm or ErrDuplicateAlgorithm.
 func ValidateAlgorithms(algorithms []string) error {
 	if len(algorithms) == 0 {
 		return ErrNoAlgorithms

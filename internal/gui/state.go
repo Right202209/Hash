@@ -22,6 +22,9 @@ type completedRun struct {
 	formatErr       error
 }
 
+// App holds the window handles and mutable state for the single application
+// window. It is only accessed from the UI thread, except for the fields
+// guarded by resultsMu and progressMu.
 type App struct {
 	window                                                                                        uintptr
 	output, status, queueInfo, algorithmSummary, resultSummary, compareStatus, queue, progressBar uintptr

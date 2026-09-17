@@ -1,9 +1,13 @@
+// Package registry is the single source of truth for the hash algorithms the
+// tool can compute, including their display labels and security categories.
 package registry
 
 import "hash"
 
+// Category groups algorithms by their intended use.
 type Category string
 
+// Algorithm categories reported by Spec.Category.
 const (
 	CategoryCryptographic Category = "cryptographic"
 	CategoryLegacy        Category = "legacy"
@@ -11,6 +15,8 @@ const (
 	CategoryNonCrypto     Category = "non-cryptographic"
 )
 
+// Spec describes one algorithm. Name is the lower-case registry key; New
+// returns a fresh hash.Hash for each file so digests never share state.
 type Spec struct {
 	Name     string
 	Label    string
@@ -44,10 +50,12 @@ var specs = []Spec{
 
 var byName = buildIndex()
 
+// Algorithms returns a copy of every registered algorithm, in display order.
 func Algorithms() []Spec {
 	return append([]Spec(nil), specs...)
 }
 
+// Lookup returns the algorithm registered under name.
 func Lookup(name string) (Spec, bool) {
 	spec, ok := byName[name]
 	return spec, ok

@@ -1,3 +1,5 @@
+// Package compare parses digest listings and compares an expected listing with a
+// freshly computed one, reporting matches, mismatches and set differences.
 package compare
 
 import (
@@ -12,12 +14,16 @@ import (
 
 const maxRecords = 100_000
 
+// Record is one algorithm, digest and path tuple read from a listing.
 type Record struct {
 	Algorithm string
 	Digest    string
 	Path      string
 }
 
+// Summary counts how an actual listing compares with an expected one. Exact is
+// true only when every expected record matched and neither side had extras or
+// duplicates.
 type Summary struct {
 	Matches    int
 	Mismatches int
@@ -27,6 +33,8 @@ type Summary struct {
 	Exact      bool
 }
 
+// RecordsFromResults flattens successful hash results into comparison records,
+// skipping files that failed.
 func RecordsFromResults(results []engine.FileResult) []Record {
 	records := make([]Record, 0)
 	for _, result := range results {
@@ -44,6 +52,8 @@ func RecordsFromResults(results []engine.FileResult) []Record {
 	return records
 }
 
+// ParseText reads a text or TSV digest listing, tolerating a BOM, header rows
+// and error rows.
 func ParseText(text string) ([]Record, error) {
 	text = strings.TrimPrefix(text, string(rune(0xFEFF)))
 	if strings.TrimSpace(text) == "" {
@@ -147,6 +157,8 @@ func unescapeTSV(value string) (string, error) {
 	return builder.String(), nil
 }
 
+// Compare indexes both listings by algorithm and normalized path, then counts
+// matches, mismatches, missing, unexpected and duplicate records.
 func Compare(expected, actual []Record) Summary {
 	expectedMap, expectedDuplicates := index(expected)
 	actualMap, actualDuplicates := index(actual)

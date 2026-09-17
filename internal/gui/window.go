@@ -1,5 +1,7 @@
 //go:build windows
 
+// Package gui implements the native Windows GUI: window layout, theming,
+// progress reporting and the clipboard comparison workflow.
 package gui
 
 import (
@@ -10,6 +12,7 @@ import (
 	"hash/internal/registry"
 )
 
+// Run creates the window and pumps the Windows message loop until it closes.
 func Run() {
 	setDPIAwarenessContext.Call(^uintptr(3))
 	commonControls := initCommonControlsEx{size: uint32(unsafe.Sizeof(initCommonControlsEx{})), classes: 0x00000008 | 0x00000040}

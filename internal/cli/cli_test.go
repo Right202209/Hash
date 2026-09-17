@@ -19,7 +19,7 @@ func TestExpandPaths_GlobAndDeduplicates(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	paths, err := cli.ExpandPaths([]string{filepath.Join(dir, "*.txt"), filepath.Join(dir, "a.txt")}, false, false)
+	paths, err := cli.ExpandPaths([]string{filepath.Join(dir, "*.txt"), filepath.Join(dir, "a.txt")}, cli.ExpandOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestParseAndSelectAlgorithms(t *testing.T) {
 
 func TestExpandPaths_NoInputReturnsSentinel(t *testing.T) {
 	t.Parallel()
-	if _, err := cli.ExpandPaths(nil, false, false); !errors.Is(err, cli.ErrNoInput) {
+	if _, err := cli.ExpandPaths(nil, cli.ExpandOptions{}); !errors.Is(err, cli.ErrNoInput) {
 		t.Fatalf("ExpandPaths(nil) error = %v, want ErrNoInput", err)
 	}
 }

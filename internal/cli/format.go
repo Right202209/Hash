@@ -32,6 +32,8 @@ type row struct {
 	Modified  time.Time
 }
 
+// WriteResults renders results using options. The text and TSV encoders emit one
+// row per algorithm; JSON emits one object per file.
 func WriteResults(writer io.Writer, results []engine.FileResult, algorithms []string, options FormatOptions) error {
 	switch strings.ToLower(options.Format) {
 	case "text":

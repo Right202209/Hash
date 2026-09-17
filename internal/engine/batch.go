@@ -15,16 +15,16 @@ import (
 //
 //   - Starting a file sets CurrentPath and CurrentSize and resets CurrentBytes
 //     to zero.
-//   - While the file is hashed, CurrentBytes grows monotonically up to
-//     CurrentSize. CompletedBytes deliberately excludes the in-flight file, so
+//   - While the file is hashed, CurrentBytes advances as bytes are read.
+//     CompletedBytes deliberately excludes the in-flight file, so
 //     CompletedBytes+CurrentBytes is the number of bytes hashed so far.
 //   - Completing a file, successfully or not, increments CompletedFiles, adds
-//     the file's read bytes to CompletedBytes and resets CurrentBytes to zero.
-//     CurrentPath keeps naming the file that just finished until another file
-//     starts.
+//     the bytes the attempt read to CompletedBytes and resets CurrentBytes to
+//     zero. CurrentPath keeps naming the file that just finished until another
+//     file starts.
 //
-// TotalBytes is the sum of the sizes known when the batch started; files whose
-// size could not be determined contribute zero.
+// CurrentSize and TotalBytes are the sizes observed when the batch started;
+// files whose size could not be determined contribute zero.
 type Progress struct {
 	CompletedFiles int
 	TotalFiles     int
@@ -35,6 +35,8 @@ type Progress struct {
 	CurrentSize    int64
 }
 
+// BatchOptions configures HashFiles. Workers defaults to min(4, GOMAXPROCS) and
+// Progress, when set, may be called concurrently.
 type BatchOptions struct {
 	HashOptions Options
 	Workers     int
@@ -42,17 +44,21 @@ type BatchOptions struct {
 	FailFast    bool
 }
 
+// FileRequest names one file and the algorithms to compute for it.
 type FileRequest struct {
 	Path       string
 	Algorithms []string
 }
 
+// FileResult pairs a FileRequest with its Result or the error that prevented it.
 type FileResult struct {
 	Request FileRequest
 	Result  Result
 	Err     error
 }
 
+// HashFiles hashes requests concurrently and returns one result per request, in
+// request order. FailFast cancels the remaining work after the first failure.
 func HashFiles(ctx context.Context, requests []FileRequest, options BatchOptions) []FileResult {
 	results := make([]FileResult, len(requests))
 	if len(requests) == 0 {

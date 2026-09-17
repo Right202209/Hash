@@ -1,3 +1,5 @@
+// Package cli parses command-line arguments, expands input paths, drives the hash
+// engine and renders results as text, TSV or JSON.
 package cli
 
 import (
@@ -28,6 +30,7 @@ const (
 // ErrUnsupportedFormat is returned when --format names an unknown encoding.
 var ErrUnsupportedFormat = errors.New("unsupported output format")
 
+// Config is the parsed command line.
 type Config struct {
 	Algorithms   []string
 	All          bool
@@ -59,7 +62,7 @@ func run(ctx context.Context, config Config, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return ExitUsage
 	}
-	paths, err := ExpandPaths(config.Paths, config.Recursive, config.Literal)
+	paths, err := ExpandPaths(config.Paths, ExpandOptions{Recursive: config.Recursive, Literal: config.Literal})
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return ExitUsage
@@ -110,6 +113,7 @@ func exitCodeForResults(results []engine.FileResult, failFast bool) int {
 	return ExitSuccess
 }
 
+// Parse interprets args. Usage and parse errors are written to usage.
 func Parse(args []string, usage io.Writer) (Config, error) {
 	flags := flag.NewFlagSet("hash", flag.ContinueOnError)
 	flags.SetOutput(usage)
@@ -151,6 +155,7 @@ func Parse(args []string, usage io.Writer) (Config, error) {
 	}, nil
 }
 
+// SelectAlgorithms resolves config into a validated, normalized algorithm list.
 func SelectAlgorithms(config Config) ([]string, error) {
 	if config.All {
 		algorithms := registry.Algorithms()
@@ -178,6 +183,7 @@ func splitAlgorithms(value string) []string {
 	return parts
 }
 
+// Main runs the command with the process arguments and exits with its status.
 func Main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	code := Run(ctx, os.Args[1:], os.Stdout, os.Stderr)

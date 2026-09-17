@@ -15,14 +15,26 @@ import (
 // ErrNoInput is returned when no file path or pattern was provided.
 var ErrNoInput = errors.New("at least one file path or pattern is required")
 
-func ExpandPaths(inputs []string, recursive, literal bool) ([]string, error) {
+// ExpandOptions controls how ExpandPaths interprets its inputs.
+type ExpandOptions struct {
+	// Recursive descends into directories instead of rejecting them.
+	Recursive bool
+	// Literal treats inputs as literal paths even when they contain glob
+	// metacharacters.
+	Literal bool
+}
+
+// ExpandPaths resolves inputs into a de-duplicated, ordered list of regular
+// files, applying globbing, recursion and literal handling as configured by
+// options.
+func ExpandPaths(inputs []string, options ExpandOptions) ([]string, error) {
 	if len(inputs) == 0 {
 		return nil, ErrNoInput
 	}
 	paths := make([]string, 0, len(inputs))
 	seen := make(map[string]struct{})
 	for _, input := range inputs {
-		matches, err := expandPath(input, recursive, literal)
+		matches, err := expandPath(input, options)
 		if err != nil {
 			return nil, err
 		}
@@ -39,8 +51,8 @@ func ExpandPaths(inputs []string, recursive, literal bool) ([]string, error) {
 	return paths, nil
 }
 
-func expandPath(input string, recursive, literal bool) ([]string, error) {
-	if !literal && hasMeta(input) {
+func expandPath(input string, options ExpandOptions) ([]string, error) {
+	if !options.Literal && hasMeta(input) {
 		matches, err := filepath.Glob(input)
 		if err != nil {
 			return nil, fmt.Errorf("expand %q: %w", input, err)
@@ -60,7 +72,7 @@ func expandPath(input string, recursive, literal bool) ([]string, error) {
 		}
 		return []string{input}, nil
 	}
-	if !recursive {
+	if !options.Recursive {
 		return nil, fmt.Errorf("%q is a directory; use --recursive to include its files", input)
 	}
 	var files []string

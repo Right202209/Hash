@@ -1,6 +1,7 @@
 package compare
 
 import (
+	"runtime"
 	"testing"
 
 	"hash/internal/engine"
@@ -12,7 +13,7 @@ func TestParseTextAndCompare(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []Record{{Algorithm: "SHA256", Digest: "abc123", Path: "c:\\data\\a.bin"}}
+	expected := []Record{{Algorithm: "SHA256", Digest: "abc123", Path: "C:\\Data\\a.bin"}}
 	got := Compare(expected, actual)
 	if !got.Exact || got.Matches != 1 {
 		t.Fatalf("summary = %+v", got)
@@ -84,5 +85,21 @@ func (testingError) Error() string { return "error" }
 func TestParseTextRejectsInvalidLines(t *testing.T) {
 	if _, err := ParseText("not-a-record"); err == nil {
 		t.Fatal("invalid clipboard text was accepted")
+	}
+}
+
+func TestComparePathCaseFoldingMatchesPlatform(t *testing.T) {
+	t.Parallel()
+	expected := []Record{{Algorithm: "sha256", Digest: "abc", Path: "Dir/File.bin"}}
+	actual := []Record{{Algorithm: "sha256", Digest: "abc", Path: "dir/file.bin"}}
+	got := Compare(expected, actual)
+	if runtime.GOOS == "windows" {
+		if got.Matches != 1 || !got.Exact {
+			t.Fatalf("Windows paths should compare case-insensitively: %+v", got)
+		}
+		return
+	}
+	if got.Matches != 0 {
+		t.Fatalf("non-Windows paths should compare case-sensitively: %+v", got)
 	}
 }
