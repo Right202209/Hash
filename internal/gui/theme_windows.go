@@ -16,9 +16,6 @@ const (
 	textColor    uint32 = 0x00FBF5E8
 	mutedColor   uint32 = 0x00BBA88E
 	iceColor     uint32 = 0x00F7D876
-	successColor uint32 = 0x00B0DB68
-	warningColor uint32 = 0x007DD3FF
-	dangerColor  uint32 = 0x009480FF
 )
 
 type theme struct {
@@ -40,26 +37,10 @@ type paintStruct struct {
 	reserved   [32]byte
 }
 
-type drawItemStruct struct {
-	ctlType    uint32
-	ctlID      uint32
-	itemID     uint32
-	itemAction uint32
-	itemState  uint32
-	hwndItem   syscall.Handle
-	hdc        syscall.Handle
-	rcItem     rect
-	itemData   uintptr
-}
-
 const (
-	odsSelected    = 0x0001
-	odsDisabled    = 0x0004
-	odsFocus       = 0x0010
-	odsNoFocusRect = 0x0200
-	dtLeft         = 0x00000000
-	dtVCenter      = 0x00000004
-	dtSingleLine   = 0x00000020
+	dtLeft       = 0x00000000
+	dtVCenter    = 0x00000004
+	dtSingleLine = 0x00000020
 )
 
 func newTheme(createBrush, createFont *syscall.LazyProc) theme {

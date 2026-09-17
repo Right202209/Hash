@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -8,13 +9,20 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 
+	"hash/internal/atomicfile"
 	"hash/internal/engine"
-	"hash/internal/pathutil"
 	"hash/internal/registry"
+)
+
+// Exit codes returned by Run. They are part of the command-line contract.
+const (
+	ExitSuccess  = 0
+	ExitFailure  = 1
+	ExitUsage    = 2
+	ExitCanceled = 3
 )
 
 type Config struct {
@@ -32,68 +40,70 @@ type Config struct {
 	Paths        []string
 }
 
-func Run(args []string, stdout, stderr io.Writer) int {
+// Run parses args and executes one command. Cancellation is carried by ctx;
+// Main installs the signal handler, which keeps Run testable.
+func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	config, err := Parse(args, stderr)
 	if err != nil {
-		return 2
+		return ExitUsage
 	}
+	return run(ctx, config, stdout, stderr)
+}
+
+func run(ctx context.Context, config Config, stdout, stderr io.Writer) int {
 	algorithms, err := SelectAlgorithms(config)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 2
+		return ExitUsage
 	}
 	paths, err := ExpandPaths(config.Paths, config.Recursive, config.Literal)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 2
+		return ExitUsage
 	}
 	requests := make([]engine.FileRequest, len(paths))
 	for index, path := range paths {
 		requests[index] = engine.FileRequest{Path: path, Algorithms: algorithms}
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	results := engine.HashFiles(ctx, requests, engine.BatchOptions{Workers: config.Workers, FailFast: config.FailFast})
-	writer := stdout
-	var output *os.File
-	var tempOutput string
-	if config.Output != "" {
-		output, tempOutput, err = prepareOutput(config.Output, paths)
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		writer = output
+	if err := writeResults(stdout, config, paths, results, algorithms); err != nil {
+		fmt.Fprintln(stderr, err)
+		return ExitFailure
 	}
-	if err := WriteResults(writer, results, algorithms, config.Format, config.ShowSize, config.ShowModified, config.UTC); err != nil {
-		if output != nil {
-			_ = output.Close()
-			_ = os.Remove(tempOutput)
+	return exitCodeForResults(results, config.FailFast)
+}
+
+// writeResults renders results to stdout, or atomically to config.Output. The
+// output file is only touched once formatting has succeeded, so a formatting
+// failure cannot truncate an existing file.
+func writeResults(stdout io.Writer, config Config, paths []string, results []engine.FileResult, algorithms []string) error {
+	if config.Output == "" {
+		if err := WriteResults(stdout, results, algorithms, config.Format, config.ShowSize, config.ShowModified, config.UTC); err != nil {
+			return fmt.Errorf("write results: %w", err)
 		}
-		fmt.Fprintln(stderr, "write results:", err)
-		return 1
+		return nil
 	}
-	if output != nil {
-		if err := output.Close(); err != nil {
-			_ = os.Remove(tempOutput)
-			fmt.Fprintln(stderr, "close output:", err)
-			return 1
-		}
-		if err := commitOutput(tempOutput, config.Output, paths); err != nil {
-			_ = os.Remove(tempOutput)
-			fmt.Fprintln(stderr, "commit output:", err)
-			return 1
-		}
+	var buffer bytes.Buffer
+	if err := WriteResults(&buffer, results, algorithms, config.Format, config.ShowSize, config.ShowModified, config.UTC); err != nil {
+		return fmt.Errorf("write results: %w", err)
 	}
+	if err := atomicfile.Write(config.Output, paths, buffer.Bytes()); err != nil {
+		return fmt.Errorf("write output: %w", err)
+	}
+	return nil
+}
+
+func exitCodeForResults(results []engine.FileResult, failFast bool) int {
 	for _, result := range results {
-		if result.Err != nil {
-			if config.FailFast || errors.Is(result.Err, context.Canceled) {
-				return 3
-			}
-			return 1
+		if result.Err == nil {
+			continue
 		}
+		if failFast || errors.Is(result.Err, context.Canceled) {
+			return ExitCanceled
+		}
+		return ExitFailure
 	}
-	return 0
+	return ExitSuccess
 }
 
 func Parse(args []string, usage io.Writer) (Config, error) {
@@ -176,82 +186,9 @@ func splitAlgorithms(value string) []string {
 	return parts
 }
 
-func WriteFileAtomic(path string, inputs []string, content []byte) error {
-	file, tempPath, err := prepareOutput(path, inputs)
-	if err != nil {
-		return err
-	}
-	if _, err := file.Write(content); err != nil {
-		_ = file.Close()
-		_ = os.Remove(tempPath)
-		return fmt.Errorf("write temporary output: %w", err)
-	}
-	if err := file.Close(); err != nil {
-		_ = os.Remove(tempPath)
-		return fmt.Errorf("close temporary output: %w", err)
-	}
-	if err := commitOutput(tempPath, path, inputs); err != nil {
-		_ = os.Remove(tempPath)
-		return err
-	}
-	return nil
-}
-
-func validateOutputPath(output string, inputs []string) error {
-	outputAbs, err := filepath.Abs(output)
-	if err != nil {
-		return fmt.Errorf("resolve output path: %w", err)
-	}
-	outputInfo, err := os.Lstat(output)
-	if err == nil && outputInfo.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("refusing to write through symbolic link %q", output)
-	}
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("inspect output path: %w", err)
-	}
-	if err == nil {
-		outputInfo, statErr := os.Stat(output)
-		if statErr != nil {
-			return fmt.Errorf("stat output path: %w", statErr)
-		}
-		for _, input := range inputs {
-			inputInfo, inputErr := os.Stat(input)
-			if inputErr == nil && os.SameFile(outputInfo, inputInfo) {
-				return fmt.Errorf("output path must not refer to input %q", input)
-			}
-		}
-	}
-	for _, input := range inputs {
-		inputAbs, absErr := filepath.Abs(input)
-		if absErr == nil && pathutil.Key(inputAbs) == pathutil.Key(outputAbs) {
-			return fmt.Errorf("output path must differ from input %q", input)
-		}
-	}
-	return nil
-}
-
-func prepareOutput(output string, inputs []string) (*os.File, string, error) {
-	if err := validateOutputPath(output, inputs); err != nil {
-		return nil, "", err
-	}
-	file, err := os.CreateTemp(filepath.Dir(output), ".hash-output-*")
-	if err != nil {
-		return nil, "", fmt.Errorf("create temporary output: %w", err)
-	}
-	return file, file.Name(), nil
-}
-
-func commitOutput(tempPath, output string, inputs []string) error {
-	if err := validateOutputPath(output, inputs); err != nil {
-		return err
-	}
-	if err := replacePath(tempPath, output); err != nil {
-		return fmt.Errorf("rename temporary output: %w", err)
-	}
-	return nil
-}
-
 func Main() {
-	code := Run(os.Args[1:], os.Stdout, os.Stderr)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	code := Run(ctx, os.Args[1:], os.Stdout, os.Stderr)
+	stop()
 	os.Exit(code)
 }

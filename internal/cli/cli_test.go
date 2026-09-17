@@ -50,32 +50,6 @@ func TestWriteResults_TSVHasStableColumnsAndEscapesFormula(t *testing.T) {
 	}
 }
 
-func TestWriteFileAtomic_RejectsHardLinkToInput(t *testing.T) {
-	if err := os.WriteFile(filepath.Join(t.TempDir(), "placeholder"), nil, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	dir := t.TempDir()
-	input := filepath.Join(dir, "input.bin")
-	output := filepath.Join(dir, "output.txt")
-	content := []byte("original input")
-	if err := os.WriteFile(input, content, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Link(input, output); err != nil {
-		t.Skipf("hard links unavailable: %v", err)
-	}
-	if err := cli.WriteFileAtomic(output, []string{input}, []byte("replacement")); err == nil {
-		t.Fatal("WriteFileAtomic unexpectedly accepted hard link to input")
-	}
-	got, err := os.ReadFile(input)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != string(content) {
-		t.Fatalf("input changed to %q", got)
-	}
-}
-
 func TestParseAndSelectAlgorithms(t *testing.T) {
 	config, err := cli.Parse([]string{"--algorithm", "SHA256, md5", "--format", "json", "file.bin"}, &bytes.Buffer{})
 	if err != nil {
