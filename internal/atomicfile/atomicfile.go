@@ -36,6 +36,14 @@ func Write(path string, inputs []string, content []byte) error {
 	return nil
 }
 
+// Validate reports whether Write would currently accept path, without writing
+// anything. Callers use it to reject a bad destination before doing expensive
+// work; Write re-validates before committing, so a check that has gone stale
+// in the meantime is still caught.
+func Validate(path string, inputs []string) error {
+	return validate(path, inputs)
+}
+
 func validate(path string, inputs []string) error {
 	pathAbs, err := filepath.Abs(path)
 	if err != nil {

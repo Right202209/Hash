@@ -67,6 +67,15 @@ func run(ctx context.Context, config Config, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return ExitUsage
 	}
+	if config.Output != "" {
+		// Reject a bad destination before spending time hashing; Write
+		// re-validates before committing, so this early check is purely
+		// fail-fast.
+		if err := atomicfile.Validate(config.Output, paths); err != nil {
+			fmt.Fprintln(stderr, err)
+			return ExitFailure
+		}
+	}
 	requests := make([]engine.FileRequest, len(paths))
 	for index, path := range paths {
 		requests[index] = engine.FileRequest{Path: path, Algorithms: algorithms}
