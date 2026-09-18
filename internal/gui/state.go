@@ -42,7 +42,7 @@ type App struct {
 	phase                                                                                         uiPhase
 	cancel                                                                                        context.CancelFunc
 	resultsMu                                                                                     sync.RWMutex
-	run                                                                                           completedRun
+	lastRun                                                                                       completedRun
 	progressMu                                                                                    sync.RWMutex
 	progress                                                                                      engine.Progress
 	algorithmsInUse                                                                               []string

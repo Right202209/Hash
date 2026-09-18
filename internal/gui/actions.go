@@ -55,7 +55,7 @@ func (app *App) clearFiles() {
 	app.fileSizes = nil
 	app.rowIndexByPath = nil
 	app.resultsMu.Lock()
-	app.run = completedRun{}
+	app.lastRun = completedRun{}
 	app.resultsMu.Unlock()
 	app.clearComparison()
 	app.phase = phaseIdle
@@ -115,7 +115,7 @@ func (app *App) addPaths(paths []string) {
 	}
 	if added > 0 {
 		app.resultsMu.Lock()
-		app.run = completedRun{}
+		app.lastRun = completedRun{}
 		app.resultsMu.Unlock()
 		app.phase = phaseReady
 		app.setOutput("结果会显示在这里。\r\n选择文件和算法后，点击“开始计算”。")
@@ -186,7 +186,7 @@ func (app *App) runHashing(ctx context.Context, done chan struct{}, requests []e
 	}})
 	run := buildCompletedRun(results, algorithms)
 	app.resultsMu.Lock()
-	app.run = run
+	app.lastRun = run
 	app.resultsMu.Unlock()
 }
 
@@ -287,7 +287,7 @@ func (app *App) finishHashing(done chan struct{}) {
 	app.workerDone = nil
 	app.cancel = nil
 	app.resultsMu.RLock()
-	run := app.run
+	run := app.lastRun
 	app.resultsMu.RUnlock()
 	if run.formatErr != nil {
 		app.phase = phaseError
@@ -445,7 +445,7 @@ func (app *App) setResultSummary(text string) {
 func (app *App) completedRecords() []compare.Record {
 	app.resultsMu.RLock()
 	defer app.resultsMu.RUnlock()
-	return append([]compare.Record(nil), app.run.expectedRecords...)
+	return append([]compare.Record(nil), app.lastRun.expectedRecords...)
 }
 
 func (app *App) clearComparison() {
