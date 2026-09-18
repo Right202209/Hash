@@ -16,6 +16,7 @@ import (
 	"hash/internal/cli"
 	"hash/internal/compare"
 	"hash/internal/engine"
+	"hash/internal/pathutil"
 )
 
 func (app *App) handleCommand(id uint32) {
@@ -91,7 +92,7 @@ func (app *App) addPaths(paths []string) {
 	}
 	seen := make(map[string]struct{}, len(app.paths))
 	for _, path := range app.paths {
-		seen[strings.ToLower(filepath.Clean(path))] = struct{}{}
+		seen[pathutil.Key(path)] = struct{}{}
 	}
 	rejected := 0
 	added := 0
@@ -102,7 +103,7 @@ func (app *App) addPaths(paths []string) {
 			continue
 		}
 		cleaned := filepath.Clean(path)
-		key := strings.ToLower(cleaned)
+		key := pathutil.Key(cleaned)
 		if _, exists := seen[key]; exists {
 			continue
 		}
@@ -346,7 +347,7 @@ func (app *App) finishHashing(done chan struct{}) {
 }
 
 func (app *App) updateQueueProgress(progress engine.Progress) {
-	index, ok := app.rowIndexByPath[queuePathKey(progress.CurrentPath)]
+	index, ok := app.rowIndexByPath[pathutil.Key(progress.CurrentPath)]
 	if !ok || index >= len(app.rowStates) || app.rowStates[index] == "计算中" {
 		return
 	}
@@ -375,7 +376,7 @@ func (app *App) rebuildQueue() {
 	app.rowIndexByPath = make(map[string]int, len(app.paths))
 	sendMessage.Call(app.queue, lvmDeleteAllItems, 0, 0)
 	for index, path := range app.paths {
-		app.rowIndexByPath[queuePathKey(path)] = index
+		app.rowIndexByPath[pathutil.Key(path)] = index
 		filename, _ := syscall.UTF16PtrFromString(path)
 		item := lvItem{mask: lvifText, item: int32(index), text: filename}
 		sendMessage.Call(app.queue, lvmInsertItem, 0, uintptr(unsafe.Pointer(&item)))
@@ -402,10 +403,6 @@ func (app *App) updateQueueRow(index int) {
 	}
 	app.setListText(index, 1, formatSize(size))
 	app.setListText(index, 2, state)
-}
-
-func queuePathKey(path string) string {
-	return strings.ToLower(filepath.Clean(path))
 }
 
 func (app *App) setListText(item, subItem int, text string) {
