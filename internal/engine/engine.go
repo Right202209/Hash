@@ -35,7 +35,9 @@ func HashFile(ctx context.Context, path string, algorithms []string) (Result, er
 
 // HashFileWithOptions hashes path, applying options. Symbolic links are followed
 // and the opened file descriptor is authoritative, so the regular-file check and
-// the read cannot be separated by a path swap.
+// the read cannot be separated by a path swap. On a failure after reading began,
+// the returned Result still carries the path and the number of bytes read before
+// the failure, so progress accounting stays monotonic; digests are absent.
 func HashFileWithOptions(ctx context.Context, path string, algorithms []string, options Options) (Result, error) {
 	if err := ValidateAlgorithms(algorithms); err != nil {
 		return Result{}, err
@@ -78,12 +80,12 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 	var bytesRead int64
 	for {
 		if err := ctx.Err(); err != nil {
-			return Result{}, err
+			return Result{Path: path, BytesRead: bytesRead}, err
 		}
 		count, readErr := file.Read(buffer)
 		if count > 0 {
 			if _, err := multiWriter.Write(buffer[:count]); err != nil {
-				return Result{}, fmt.Errorf("hash %q: %w", path, err)
+				return Result{Path: path, BytesRead: bytesRead}, fmt.Errorf("hash %q: %w", path, err)
 			}
 			bytesRead += int64(count)
 			if options.Progress != nil {
@@ -94,17 +96,17 @@ func HashFileWithOptions(ctx context.Context, path string, algorithms []string, 
 			break
 		}
 		if readErr != nil {
-			return Result{}, fmt.Errorf("read %q: %w", path, readErr)
+			return Result{Path: path, BytesRead: bytesRead}, fmt.Errorf("read %q: %w", path, readErr)
 		}
 	}
 
 	after, err := file.Stat()
 	if err != nil {
-		return Result{}, fmt.Errorf("stat %q after hashing: %w", path, err)
+		return Result{Path: path, BytesRead: bytesRead}, fmt.Errorf("stat %q after hashing: %w", path, err)
 	}
 	pathAfter, err := os.Stat(path)
 	if err != nil {
-		return Result{}, fmt.Errorf("stat %q after hashing: %w", path, err)
+		return Result{Path: path, BytesRead: bytesRead}, fmt.Errorf("stat %q after hashing: %w", path, err)
 	}
 	digests := make(map[string]string, len(digesters))
 	for index, digester := range digesters {

@@ -20,9 +20,11 @@ import (
 //     CompletedBytes+CurrentBytes is the number of bytes hashed so far.
 //   - Completing a file, successfully or not, increments CompletedFiles, adds
 //     the bytes the attempt read to CompletedBytes and resets CurrentBytes to
-//     zero. CurrentPath keeps naming the file that just finished until another
-//     file starts.
+//     zero. CurrentPath and CurrentSize keep describing the file that just
+//     finished until another file starts.
 //
+// Files skipped because the batch was cancelled before they started emit no
+// events, so CompletedFiles ends below TotalFiles when work is cancelled.
 // CurrentSize and TotalBytes are the sizes observed when the batch started;
 // files whose size could not be determined contribute zero.
 type Progress struct {
