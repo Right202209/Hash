@@ -16,10 +16,8 @@ const (
 	wmPaint          = 0x000F
 	wmEraseBkgnd     = 0x0014
 	wmCommand        = 0x0111
-	wmNotify         = 0x004E
 	wmDropFiles      = 0x0233
 	wmClose          = 0x0010
-	wmDrawItem       = 0x002B
 	wmCtlColorStatic = 0x0138
 	wmCtlColorEdit   = 0x0133
 	wmCtlColorButton = 0x0135
@@ -87,11 +85,9 @@ const (
 	lvmInsertItem          = lvmFirst + 77
 	lvmSetExtendedStyle    = lvmFirst + 54
 	lvmInsertColumn        = lvmFirst + 97
-	lvmSetColumnWidth      = lvmFirst + 30
 	lvifText               = 0x0001
 	lvcfWidth              = 0x0002
 	lvcfText               = 0x0004
-	lvscwAutosizeUseHeader = -2
 	lvsReport              = 0x0001
 	lvsShowSelAlways       = 0x0008
 	lvsExFullRowSelect     = 0x00000020
@@ -100,12 +96,7 @@ const (
 	lvmSetTextBkColor      = lvmFirst + 38
 	lvmSetTextColor        = lvmFirst + 37
 
-	pbmSetRange32 = 0x0401
 	pbmSetPos     = 0x0402
-	pbmSetState   = 0x0410
-	pbstNormal    = 0x0001
-	pbstError     = 0x0002
-	pbstPaused    = 0x0003
 	progressClass = "msctls_progress32"
 	listViewClass = "SysListView32"
 )
@@ -201,15 +192,12 @@ var (
 	loadCursor             = user32.NewProc("LoadCursorW")
 	loadIcon               = user32.NewProc("LoadIconW")
 	setWindowText          = user32.NewProc("SetWindowTextW")
-	getWindowText          = user32.NewProc("GetWindowTextW")
-	getWindowTextLength    = user32.NewProc("GetWindowTextLengthW")
 	getClientRect          = user32.NewProc("GetClientRect")
 	moveWindow             = user32.NewProc("MoveWindow")
 	enableWindow           = user32.NewProc("EnableWindow")
 	getDlgItem             = user32.NewProc("GetDlgItem")
 	checkButton            = user32.NewProc("CheckDlgButton")
 	isChecked              = user32.NewProc("IsDlgButtonChecked")
-	postMessage            = user32.NewProc("PostMessageW")
 	sendMessage            = user32.NewProc("SendMessageW")
 	openClipboard          = user32.NewProc("OpenClipboard")
 	emptyClipboard         = user32.NewProc("EmptyClipboard")

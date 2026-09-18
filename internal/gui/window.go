@@ -103,11 +103,6 @@ func (app *App) handleMessage(hwnd uintptr, message uint32, wParam, lParam uintp
 		id := uint32(wParam & 0xffff)
 		app.handleCommand(id)
 		return 0
-	case wmNotify:
-		return app.handleNotify(lParam)
-	case wmDrawItem:
-		app.drawItem(lParam)
-		return 1
 	case wmCtlColorStatic, wmCtlColorEdit, wmCtlColorButton:
 		return app.colorControl(wParam, lParam)
 	case wmDropFiles:
@@ -149,7 +144,7 @@ func (app *App) createControls(hwnd uintptr) {
 	for index, algorithm := range app.algorithms {
 		app.createCheckbox(algorithm.Label, idAlgorithmStart+index)
 	}
-	app.queue = app.createControl("SysListView32", "", lvsReport|lvsShowSelAlways|wsChild|wsVisible|wsBorder|wsTabStop, idQueue)
+	app.queue = app.createControl(listViewClass, "", lvsReport|lvsShowSelAlways|wsChild|wsVisible|wsBorder|wsTabStop, idQueue)
 	app.output = app.createEdit(idOutput)
 	app.progressBar = app.createControl(progressClass, "", wsChild|wsVisible, idProgress)
 	app.status = app.createControl("STATIC", "就绪 · 尚未添加文件", wsChild|wsVisible|ssLeft, idStatus)
@@ -295,15 +290,4 @@ func (app *App) colorControl(wParam, lParam uintptr) uintptr {
 	setBkColor.Call(wParam, uintptr(insetColor))
 	setBkMode.Call(wParam, 1)
 	return uintptr(app.theme.insetBrush)
-}
-
-func (app *App) drawItem(lParam uintptr) {
-	return
-}
-
-func (app *App) handleNotify(lParam uintptr) uintptr {
-	if lParam == 0 {
-		return 0
-	}
-	return 0
 }
