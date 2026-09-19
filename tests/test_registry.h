@@ -2,6 +2,9 @@
 
 #include "core/registry.h"
 
+#include <QHash>
+#include <QPair>
+#include <QSet>
 #include <QtTest>
 
 #include <memory>

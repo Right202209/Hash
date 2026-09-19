@@ -2,6 +2,8 @@
 
 #include "cli/paths.h"
 
+#include <QDir>
+#include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
 
