@@ -10,6 +10,17 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick QuickControls2 Test)
 qt_standard_project_setup()
 
+# Link-time optimization shrinks the release binaries a little and lets the
+# linker drop dead code across the static libraries; developer builds stay
+# unoptimized for fast iteration.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipoSupported OUTPUT ipoOutput)
+if(ipoSupported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+else()
+    message(STATUS "IPO not supported: ${ipoOutput}")
+endif()
+
 if(MSVC)
     add_compile_options(/utf-8 /W4 /permissive-)
 else()

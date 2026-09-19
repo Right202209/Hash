@@ -31,10 +31,18 @@ jobs:
           $dir = "dist/hash-$version-windows-amd64"
           New-Item -ItemType Directory -Force $dir | Out-Null
           Copy-Item build/Release/hash.exe, build/Release/hash-gui.exe $dir/
+          # The toolbox is fully offline: skip the QtNetwork TLS and network
+          # status plugins (and the image formats already skipped) so the
+          # deployed footprint stays as small as possible.
           windeployqt --release --no-translations --compiler-runtime --dir $dir `
-            --no-system-d3d-compiler --no-opengl-sw --skip-plugin-types imageformats `
+            --no-system-d3d-compiler --no-opengl-sw `
+            --skip-plugin-types imageformats,networkinformation,tls `
             --qmldir src/app build/Release/hash-gui.exe
-          Compress-Archive -Path $dir -DestinationPath "dist/hash-$version-windows-amd64.zip"
+          # Repack with maximum deflate: the runner's 7-Zip compresses the Qt
+          # runtime noticeably better than Compress-Archive.
+          & "C:\Program Files\7-Zip\7z.exe" a -tzip -mx=9 `
+            "dist/hash-$version-windows-amd64.zip" "$dir" | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "7z pack failed with $LASTEXITCODE" }
           $zip = "hash-$version-windows-amd64.zip"
           (Get-FileHash "dist/$zip" -Algorithm SHA256).Hash.ToLower() + "  $zip" |
             Set-Content "dist/sha256sums.txt"
