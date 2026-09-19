@@ -197,7 +197,7 @@ Page {
                                     text: modelData.algorithm
                                     color: Theme.ice
                                     font.pixelSize: 12
-                                    font.families: Theme.monoFamilies
+                                    font.family: Theme.monoFamily
                                 }
                                 Label {
                                     Layout.fillWidth: true
@@ -205,7 +205,7 @@ Page {
                                     color: Theme.text
                                     elide: Text.ElideMiddle
                                     font.pixelSize: 12
-                                    font.families: Theme.monoFamilies
+                                    font.family: Theme.monoFamily
                                 }
                                 ToolButton {
                                     text: qsTr("⧉")
@@ -386,7 +386,7 @@ Page {
             wrapMode: TextArea.NoWrap
             textFormat: TextArea.PlainText
             font.pixelSize: 13
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
     }
 }

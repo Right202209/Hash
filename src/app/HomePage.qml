@@ -55,7 +55,7 @@ Item {
                         text: card.icon
                         color: Theme.ice
                         font.pixelSize: 24
-                        font.families: Theme.monoFamilies
+                        font.family: Theme.monoFamily
                     }
                     ColumnLayout {
                         Layout.fillWidth: true

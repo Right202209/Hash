@@ -48,7 +48,7 @@ Page {
             wrapMode: TextArea.Wrap
             selectByMouse: true
             font.pixelSize: 13
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
 
         RowLayout {
@@ -103,7 +103,7 @@ Page {
             wrapMode: TextArea.Wrap
             selectByMouse: true
             font.pixelSize: 13
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
 
         RowLayout {

@@ -39,7 +39,7 @@ Page {
             wrapMode: TextArea.Wrap
             selectByMouse: true
             font.pixelSize: 13
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
 
         RowLayout {
@@ -83,7 +83,7 @@ Page {
             selectByMouse: true
             placeholderText: qsTr("输出会显示在这里")
             font.pixelSize: 13
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
 
         RowLayout {

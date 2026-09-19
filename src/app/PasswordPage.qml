@@ -135,7 +135,7 @@ Page {
             wrapMode: TextArea.NoWrap
             selectByMouse: true
             font.pixelSize: 14
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
     }
 }

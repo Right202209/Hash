@@ -38,7 +38,7 @@ Page {
                 Layout.preferredWidth: 260
                 placeholderText: qsTr("#FF8000 或 rgb(255, 128, 0)")
                 selectByMouse: true
-                font.families: Theme.monoFamilies
+                font.family: Theme.monoFamily
                 onTextChanged: root.convert(text)
             }
             Rectangle {
@@ -85,14 +85,14 @@ Page {
                         Layout.preferredWidth: 50
                         text: modelData.label
                         color: Theme.ice
-                        font.families: Theme.monoFamilies
+                        font.family: Theme.monoFamily
                     }
                     Label {
                         Layout.fillWidth: true
                         text: modelData.value
                         color: Theme.text
                         font.pixelSize: 14
-                        font.families: Theme.monoFamilies
+                        font.family: Theme.monoFamily
                     }
                     ToolButton {
                         text: qsTr("⧉")

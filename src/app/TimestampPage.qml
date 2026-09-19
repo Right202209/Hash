@@ -82,7 +82,7 @@ Page {
                         Layout.preferredWidth: 220
                         placeholderText: qsTr("例如 946684800")
                         selectByMouse: true
-                        font.families: Theme.monoFamilies
+                        font.family: Theme.monoFamily
                         onAccepted: root.convertStamp()
                     }
                     RadioButton {
@@ -143,7 +143,7 @@ Page {
                             text: modelData.value
                             color: Theme.text
                             font.pixelSize: 13
-                            font.families: Theme.monoFamilies
+                            font.family: Theme.monoFamily
                         }
                         ToolButton {
                             text: qsTr("⧉")
@@ -175,7 +175,7 @@ Page {
                         Layout.preferredWidth: 260
                         placeholderText: qsTr("2026-01-02 03:04:05 或 ISO 8601")
                         selectByMouse: true
-                        font.families: Theme.monoFamilies
+                        font.family: Theme.monoFamily
                         onAccepted: root.convertDate()
                     }
                     Button {
@@ -217,7 +217,7 @@ Page {
                             text: modelData.value
                             color: Theme.text
                             font.pixelSize: 13
-                            font.families: Theme.monoFamilies
+                            font.family: Theme.monoFamily
                         }
                         ToolButton {
                             text: qsTr("⧉")

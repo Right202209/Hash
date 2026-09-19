@@ -16,7 +16,10 @@ QtObject {
     readonly property color ok: "#7DF781"
     readonly property color danger: "#F76D76"
 
-    readonly property var monoFamilies: ["Cascadia Mono", "Consolas", "DejaVu Sans Mono"]
+    // The QML font grouped property exposes a single family; Qt substitutes
+    // automatically when the name is unavailable (e.g. non-Windows CI).
+    readonly property string monoFamily: Qt.platform.os === "windows" ? "Cascadia Mono"
+                                                                      : "monospace"
 
     function sizeText(bytes) {
         if (bytes < 1024) {

@@ -33,7 +33,7 @@ Item {
             text: root.icon
             color: Theme.ice
             font.pixelSize: 22
-            font.families: Theme.monoFamilies
+            font.family: Theme.monoFamily
         }
         ColumnLayout {
             Layout.fillWidth: true

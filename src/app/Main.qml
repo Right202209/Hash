@@ -118,7 +118,7 @@ ApplicationWindow {
                     text: "#"
                     color: Theme.ice
                     font.pixelSize: 24
-                    font.families: Theme.monoFamilies
+                    font.family: Theme.monoFamily
                 }
                 TextField {
                     id: commandBar

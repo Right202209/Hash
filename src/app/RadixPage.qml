@@ -43,7 +43,7 @@ Page {
                 Layout.preferredWidth: 260
                 placeholderText: qsTr("输入数值")
                 selectByMouse: true
-                font.families: Theme.monoFamilies
+                font.family: Theme.monoFamily
                 onAccepted: root.convert()
             }
             Label {
@@ -110,7 +110,7 @@ Page {
                     text: root.outcome ? root.outcome.value : ""
                     color: Theme.text
                     font.pixelSize: 18
-                    font.families: Theme.monoFamilies
+                    font.family: Theme.monoFamily
                     elide: Text.ElideMiddle
                 }
                 ToolButton {
