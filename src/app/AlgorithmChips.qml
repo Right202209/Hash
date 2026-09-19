@@ -42,11 +42,16 @@ Flow {
             checked: root.defaults.indexOf(chip.name) !== -1
             onToggled: root.selectionChanged()
             hoverEnabled: true
-            cursor: Qt.PointingHandCursor
             leftPadding: 12
             rightPadding: 12
             topPadding: 5
             bottomPadding: 5
+
+            // HoverHandler is the portable way to give a control a pointer
+            // cursor; Control itself has no cursor property in QML.
+            HoverHandler {
+                cursorShape: Qt.PointingHandCursor
+            }
 
             contentItem: Row {
                 spacing: 6
