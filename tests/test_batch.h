@@ -11,14 +11,21 @@
 class TestBatch : public QObject {
     Q_OBJECT
 
+    // QVERIFY/QCOMPARE may only run in void functions, so the fixture helper
+    // reports failures through QTest::qFail and returns an empty path.
     QString writeFile(const QString &name, const QByteArray &content) {
         const QString path = mDirectory.path() + QStringLiteral("/") + name;
         QFile file(path);
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        if (!content.isEmpty()) {
-            QCOMPARE(file.write(content), qint64(content.size()));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            QTest::qFail(qPrintable(QStringLiteral("cannot open %1").arg(path)), __FILE__,
+                         __LINE__);
+            return {};
         }
-        file.close();
+        if (!content.isEmpty() && file.write(content) != qint64(content.size())) {
+            QTest::qFail(qPrintable(QStringLiteral("short write to %1").arg(path)), __FILE__,
+                         __LINE__);
+            return {};
+        }
         return path;
     }
 

@@ -3,14 +3,10 @@
 #include "core/batch.h"
 #include "core/types.h"
 
-#include <QMetaType>
 #include <QObject>
 #include <atomic>
 
 class QThread;
-
-Q_DECLARE_METATYPE(hash_core::Progress)
-Q_DECLARE_METATYPE(QVector<hash_core::FileResult>)
 
 // HashWorker owns the batch hashing call. It lives on a dedicated thread;
 // progress snapshots and the final results reach the UI thread through

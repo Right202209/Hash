@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDateTime>
+#include <QMetaType>
 #include <QString>
 #include <QStringList>
 #include <QVector>
@@ -81,3 +82,9 @@ struct FileResult {
 };
 
 } // namespace hash_core
+
+// Declared next to the definitions so every use in signals sees them before
+// QMetaTypeId<T> is first instantiated; declaring them later (for example in
+// the GUI worker header) is a hard error.
+Q_DECLARE_METATYPE(hash_core::Progress)
+Q_DECLARE_METATYPE(QVector<hash_core::FileResult>)

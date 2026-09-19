@@ -2,6 +2,7 @@
 
 #include "cli/format.h"
 #include "cli/options.h"
+#include "cli/paths.h"
 #include "core/types.h"
 
 #include <QtTest>
