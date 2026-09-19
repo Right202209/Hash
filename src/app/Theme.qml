@@ -1,9 +1,10 @@
 pragma Singleton
 import QtQuick
 
-// Theme carries the toolbox palette and small view helpers. Control colors
-// themselves come from the dark application palette set in main.cpp; these
-// values style the custom surfaces.
+// Theme is the single source of truth for every custom surface color, radius
+// and animation duration in the toolbox. Pages must reference these tokens
+// (never hard-coded hex values) so all tools share one look; the control
+// palette in main.cpp mirrors the same values for the Basic style.
 QtObject {
     readonly property color canvas: "#081421"
     readonly property color surface: "#0E2031"
@@ -13,8 +14,18 @@ QtObject {
     readonly property color text: "#E8F5FB"
     readonly property color muted: "#8EA8BB"
     readonly property color ice: "#76D8F7"
+    // Deep accent used by the mirrored control palette (main.cpp Highlight);
+    // kept here so both ends of the mirror are documented in one place.
+    readonly property color iceDeep: "#1C5B7E"
     readonly property color ok: "#7DF781"
     readonly property color danger: "#F76D76"
+
+    // One radius for small elements (fields, chips, dots) and one for cards.
+    readonly property int radius: 6
+    readonly property int cardRadius: 10
+
+    // Standard micro-animation for hover/press color changes.
+    readonly property int fadeMs: 120
 
     // The QML font grouped property exposes a single family; Qt substitutes
     // automatically when the name is unavailable (e.g. non-Windows CI).
@@ -49,5 +60,21 @@ QtObject {
             return qsTr("已取消")
         }
         return ""
+    }
+
+    // statusColor maps a queue status to the shared accent colors so every
+    // page renders the same state in the same hue.
+    function statusColor(status) {
+        switch (status) {
+        case 2:
+            return ok
+        case 3:
+            return danger
+        case 1:
+            return ice
+        case 4:
+            return muted
+        }
+        return line
     }
 }

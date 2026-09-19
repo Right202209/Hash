@@ -134,7 +134,7 @@ Page {
             readOnly: true
             wrapMode: TextArea.NoWrap
             selectByMouse: true
-            font.pixelSize: 14
+            font.pixelSize: 13
             font.family: Theme.monoFamily
         }
     }

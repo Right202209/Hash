@@ -7,7 +7,7 @@ Page {
     id: root
 
     header: PageHeader {
-        icon: "⚿"
+        icon: "ID"
         title: qsTr("UUID 生成")
         description: qsTr("批量生成 UUID v4 · 可控制大小写、大括号与连字符")
         onBackRequested: {

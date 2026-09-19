@@ -79,7 +79,9 @@ void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString
 
 // applyDarkPalette ports the widget theme to Qt Quick: the Basic style
 // renders from the application palette, so one dark palette covers every
-// control without shipping a styled QML module.
+// control without shipping a styled QML module. The values mirror Theme.qml
+// (the single source of truth for the custom surfaces); Mid, Light and Dark
+// drive the style's derived borders so every control shares the same hairline.
 void applyDarkPalette(QGuiApplication &application) {
     QPalette palette;
     palette.setColor(QPalette::Window, QColor(0x08, 0x14, 0x21));
@@ -91,8 +93,13 @@ void applyDarkPalette(QGuiApplication &application) {
     palette.setColor(QPalette::ButtonText, QColor(0xE8, 0xF5, 0xFB));
     palette.setColor(QPalette::ToolTipBase, QColor(0x0E, 0x20, 0x31));
     palette.setColor(QPalette::ToolTipText, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::Highlight, QColor(0x14, 0x2E, 0x43));
+    palette.setColor(QPalette::Highlight, QColor(0x1C, 0x5B, 0x7E));
     palette.setColor(QPalette::HighlightedText, QColor(0xE8, 0xF5, 0xFB));
+    palette.setColor(QPalette::Link, QColor(0x76, 0xD8, 0xF7));
+    palette.setColor(QPalette::Light, QColor(0x14, 0x2E, 0x43));
+    palette.setColor(QPalette::Midlight, QColor(0x11, 0x29, 0x3D));
+    palette.setColor(QPalette::Mid, QColor(0x28, 0x48, 0x5D));
+    palette.setColor(QPalette::Dark, QColor(0x05, 0x10, 0x1B));
     palette.setColor(QPalette::PlaceholderText, QColor(0x8E, 0xA8, 0xBB));
     palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8E, 0xA8, 0xBB));
     palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8E, 0xA8, 0xBB));

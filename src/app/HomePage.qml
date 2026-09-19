@@ -24,8 +24,8 @@ Item {
         model: Tools
         boundsBehavior: Flickable.StopAtBounds
         cellWidth: Math.max(240, Math.floor(width / Math.max(1, Math.floor(width / 320))))
-        cellHeight: 92
-        ScrollBar.vertical: ScrollBar {}
+        cellHeight: 96
+        ScrollBar.vertical: AppScrollBar {}
 
         delegate: Item {
             id: card
@@ -40,22 +40,47 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 6
-                color: cardHover.containsMouse ? Theme.raised : Theme.surface
+                radius: Theme.cardRadius
+                color: cardHover.pressed ? Theme.inset
+                                         : cardHover.containsMouse ? Theme.raised : Theme.surface
                 border.color: cardHover.containsMouse ? Theme.ice : Theme.line
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.fadeMs
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: Theme.fadeMs
+                    }
+                }
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: 12
                     spacing: 12
 
-                    Label {
-                        Layout.preferredWidth: 36
-                        horizontalAlignment: Text.AlignHCenter
-                        text: card.icon
-                        color: Theme.ice
-                        font.pixelSize: 24
-                        font.family: Theme.monoFamily
+                    Rectangle {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        radius: Theme.radius
+                        color: Theme.inset
+                        border.color: cardHover.containsMouse ? Theme.ice : Theme.line
+
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: Theme.fadeMs
+                            }
+                        }
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: card.icon
+                            color: Theme.ice
+                            font.pixelSize: 18
+                            font.family: Theme.monoFamily
+                        }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
@@ -75,15 +100,15 @@ Item {
                         }
                     }
                 }
+            }
 
-                MouseArea {
-                    id: cardHover
+            MouseArea {
+                id: cardHover
 
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.openRequested(card.toolId)
-                }
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.openRequested(card.toolId)
             }
         }
     }

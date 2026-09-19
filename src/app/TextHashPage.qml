@@ -20,14 +20,7 @@ Page {
     }
 
     function compute() {
-        var names = []
-        for (var i = 0; i < algorithmChips.count; ++i) {
-            const chip = algorithmChips.itemAt(i)
-            if (chip.checked) {
-                names.push(chip.name)
-            }
-        }
-        const outcome = TextDigest.hashText(input.text, names)
+        const outcome = TextDigest.hashText(input.text, algorithmChips.selectedNames())
         if (!outcome.ok) {
             errorLabel.text = outcome.error
             root.results = []
@@ -40,23 +33,11 @@ Page {
     contentItem: ColumnLayout {
         spacing: 8
 
-        Flow {
+        AlgorithmChips {
+            id: algorithmChips
+
             Layout.fillWidth: true
-            spacing: 4
-
-            Repeater {
-                id: algorithmChips
-
-                model: Algorithms
-
-                delegate: CheckBox {
-                    required property string name
-                    required property string label
-
-                    text: label
-                    checked: name === "sha256" || name === "md5"
-                }
-            }
+            defaults: ["sha256", "md5"]
         }
 
         TextArea {

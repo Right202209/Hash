@@ -28,6 +28,8 @@ qt_add_qml_module(hash-gui
         Toast.qml
         PageHeader.qml
         HomePage.qml
+        AppScrollBar.qml
+        AlgorithmChips.qml
         FileHashPage.qml
         TextHashPage.qml
         CodecPage.qml

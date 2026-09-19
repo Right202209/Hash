@@ -16,6 +16,14 @@ Item {
 
     implicitHeight: 60
 
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 1
+        color: Theme.line
+    }
+
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 10

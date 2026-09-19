@@ -91,7 +91,7 @@ Page {
                         Layout.fillWidth: true
                         text: modelData.value
                         color: Theme.text
-                        font.pixelSize: 14
+                        font.pixelSize: 13
                         font.family: Theme.monoFamily
                     }
                     ToolButton {

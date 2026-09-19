@@ -108,6 +108,14 @@ ApplicationWindow {
             Layout.preferredHeight: 52
             color: Theme.surface
 
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Theme.line
+            }
+
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 14
@@ -128,9 +136,14 @@ ApplicationWindow {
                     selectByMouse: true
                     Component.onCompleted: forceActiveFocus()
                     background: Rectangle {
+                        radius: Theme.radius
                         color: Theme.inset
-                        radius: 4
                         border.color: commandBar.activeFocus ? Theme.ice : Theme.line
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: Theme.fadeMs
+                            }
+                        }
                     }
                     Keys.onReturnPressed: function(event) {
                         event.accepted = true
@@ -161,6 +174,14 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.preferredHeight: 26
             color: Theme.surface
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: 1
+                color: Theme.line
+            }
 
             Label {
                 anchors.left: parent.left

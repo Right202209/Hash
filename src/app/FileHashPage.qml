@@ -12,7 +12,7 @@ Page {
     header: PageHeader {
         icon: "#"
         title: qsTr("文件哈希")
-        description: qsTr("批量计算文件摘要 · 单次读取多算法并行 · 支持拖拽与剪贴板比对")
+        description: qsTr("批量计算文件摘要 · 单次读取多算法并行 · 剪贴板比对自动忽略 sha256: 等前缀")
         onBackRequested: {
             if (root.StackView.view) {
                 root.StackView.view.pop()
@@ -21,18 +21,11 @@ Page {
     }
 
     function collectAlgorithms() {
-        var names = []
-        for (var i = 0; i < algorithmChips.count; ++i) {
-            const chip = algorithmChips.itemAt(i)
-            if (chip.checked) {
-                names.push(chip.name)
-            }
-        }
-        return names
+        return algorithmChips.selectedNames()
     }
 
     function refreshAlgorithmCount() {
-        root.algorithmCount = collectAlgorithms().length
+        root.algorithmCount = algorithmChips.selectedNames().length
     }
 
     Component.onCompleted: refreshAlgorithmCount()
@@ -75,24 +68,12 @@ Page {
     contentItem: ColumnLayout {
         spacing: 8
 
-        Flow {
+        AlgorithmChips {
+            id: algorithmChips
+
             Layout.fillWidth: true
-            spacing: 4
-
-            Repeater {
-                id: algorithmChips
-
-                model: Algorithms
-
-                delegate: CheckBox {
-                    required property string name
-                    required property string label
-
-                    text: label
-                    checked: name === "sha256"
-                    onToggled: root.refreshAlgorithmCount()
-                }
-            }
+            defaults: ["sha256"]
+            onSelectionChanged: root.refreshAlgorithmCount()
         }
 
         Rectangle {
@@ -100,16 +81,18 @@ Page {
             Layout.fillHeight: true
             color: Theme.inset
             border.color: Theme.line
+            radius: Theme.cardRadius
 
             ListView {
                 id: fileList
 
                 anchors.fill: parent
+                anchors.margins: 4
                 clip: true
                 model: HashController.files
                 boundsBehavior: Flickable.StopAtBounds
                 reuseItems: false
-                ScrollBar.vertical: ScrollBar {}
+                ScrollBar.vertical: AppScrollBar {}
 
                 delegate: Rectangle {
                     id: fileRow
@@ -143,10 +126,7 @@ Page {
                                 Layout.preferredWidth: 8
                                 Layout.preferredHeight: 8
                                 radius: 4
-                                color: fileRow.status === 2 ? Theme.ok
-                                       : fileRow.status === 3 ? Theme.danger
-                                       : fileRow.status === 1 ? Theme.ice
-                                       : fileRow.status === 4 ? Theme.muted : Theme.line
+                                color: Theme.statusColor(fileRow.status)
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -166,8 +146,7 @@ Page {
                             Label {
                                 text: Theme.statusText(fileRow.status)
                                 color: fileRow.status === 3 ? Theme.danger : Theme.muted
-                            }
-                            ToolButton {
+                            }                            ToolButton {
                                 text: qsTr("✕")
                                 enabled: !HashController.busy
                                 visible: !HashController.busy
@@ -368,6 +347,8 @@ Page {
             Button {
                 text: qsTr("粘贴对比")
                 enabled: HashController.hasOutput
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("支持完整清单，或直接粘贴摘要（自动忽略 sha256: 等算法前缀）")
                 onClicked: HashController.compareClipboard(Clipboard.text())
             }
             Button {

@@ -25,7 +25,7 @@ ToolRegistryModel::ToolRegistryModel(QObject *parent) : QAbstractListModel(paren
          QStringLiteral("Unix 时间戳与日期时间互相转换"), QStringLiteral("⏱"),
          QStringLiteral("timestamp unix 时间戳 日期 时间 转换 epoch")},
         {QStringLiteral("uuid"), QStringLiteral("UUID 生成"),
-         QStringLiteral("批量生成 UUID v4，可控制大小写与连字符"), QStringLiteral("⚿"),
+         QStringLiteral("批量生成 UUID v4，可控制大小写与连字符"), QStringLiteral("ID"),
          QStringLiteral("uuid guid 生成 随机 标识")},
         {QStringLiteral("radix"), QStringLiteral("进制转换"),
          QStringLiteral("在 2-36 进制之间转换整数值"), QStringLiteral("01"),
