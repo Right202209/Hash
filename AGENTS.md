@@ -10,7 +10,7 @@
 - `src/tools/` — toolbox backends in a QtCore-only static library `hash_tools`: tool-registry, algorithm-registry and file-queue models, the threaded `HashController` for batch hashing from the GUI, and one small QObject controller per tool (text digest, Base64/URL codec, JSON, timestamp, UUID, radix, color, password).
 - `src/app/` — Qt Quick (QML) GUI: a launcher-style shell (command bar, tool grid, lazy-loaded tool pages), QML singletons for theme and notifications, plus `main.cpp` (dark application palette, singleton registration) and the clipboard service.
 - `tests/` — Qt Test suites in `test_*.h`, driven by `tests/main.cpp`.
-- `CMakeLists.txt` — static libraries `hash_core` and `hash_tools` plus the `hash` (console) and `hash-gui` (windowsgui, QML compiled in via `qt_add_qml_module`) executables and the `hash_tests` runner.
+- `CMakeLists.txt` — static libraries `hash_core` and `hash_tools` plus the `hash` (console) and `hash_tests` targets; `hash-gui` (windowsgui, QML compiled in via `qt_add_qml_module`) is defined in `src/app/CMakeLists.txt`, beside the QML files the module registers.
 
 ## Build, Test, and Development Commands
 

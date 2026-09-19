@@ -72,58 +72,9 @@ target_link_libraries(hash_tools PUBLIC hash_core Qt6::Core)
 add_executable(hash src/cli/main.cpp)
 target_link_libraries(hash PRIVATE hash_core)
 
-qt_add_executable(hash-gui WIN32
-    src/app/main.cpp
-    src/app/clipservice.cpp
-    src/app/clipservice.h
-)
-target_link_libraries(hash-gui PRIVATE hash_tools Qt6::Quick Qt6::QuickControls2)
-
-# The QML files are compiled into the binary (qmlcachegen), so the shipped
-# application carries no loose .qml files. Explicit aliases keep the module
-# layout independent of the source directory structure.
-set(HASH_GUI_QML_FILES
-    Main
-    Theme
-    Toast
-    PageHeader
-    HomePage
-    FileHashPage
-    TextHashPage
-    CodecPage
-    JsonPage
-    TimestampPage
-    UuidPage
-    RadixPage
-    ColorPage
-    PasswordPage
-)
-foreach(qml_file IN LISTS HASH_GUI_QML_FILES)
-    set_source_files_properties(src/app/${qml_file}.qml PROPERTIES
-        QT_RESOURCE_ALIAS "${qml_file}.qml")
-endforeach()
-set_source_files_properties(src/app/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(src/app/Toast.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-
-qt_add_qml_module(hash-gui
-    URI Hash
-    VERSION 1.0
-    QML_FILES
-        src/app/Main.qml
-        src/app/Theme.qml
-        src/app/Toast.qml
-        src/app/PageHeader.qml
-        src/app/HomePage.qml
-        src/app/FileHashPage.qml
-        src/app/TextHashPage.qml
-        src/app/CodecPage.qml
-        src/app/JsonPage.qml
-        src/app/TimestampPage.qml
-        src/app/UuidPage.qml
-        src/app/RadixPage.qml
-        src/app/ColorPage.qml
-        src/app/PasswordPage.qml
-)
+# The GUI target and its QML module are defined in src/app, next to the QML
+# files; see src/app/CMakeLists.txt.
+add_subdirectory(src/app)
 
 enable_testing()
 
