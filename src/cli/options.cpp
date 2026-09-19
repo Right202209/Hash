@@ -79,6 +79,7 @@ QString usageText() {
 
 bool parseArgs(const QStringList &args, Config *config, QString *error) {
     QStringList paths;
+    bool sawAlgorithm = false;
     int index = 0;
     while (index < args.size()) {
         const QString arg = args.at(index);
@@ -134,6 +135,7 @@ bool parseArgs(const QStringList &args, Config *config, QString *error) {
                 return false;
             }
             config->algorithms = splitAlgorithmList(value);
+            sawAlgorithm = true;
         } else if (name == QStringLiteral("all")) {
             if (!assignBool(&config->all, name)) {
                 return false;
@@ -192,6 +194,10 @@ bool parseArgs(const QStringList &args, Config *config, QString *error) {
         ++index;
     }
     config->paths = paths;
+    // The -a/--algorithm flag defaults to sha256 when it is not given.
+    if (!sawAlgorithm) {
+        config->algorithms = splitAlgorithmList(QStringLiteral("sha256"));
+    }
     if (config->workers < 0) {
         *error = QStringLiteral("workers cannot be negative");
         return false;

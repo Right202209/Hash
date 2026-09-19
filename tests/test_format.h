@@ -115,6 +115,16 @@ class TestFormat : public QObject {
         QCOMPARE(selected.join(u','), QStringLiteral("sha256,md5"));
     }
 
+    void algorithmDefaultsToSha256() {
+        hash_core::Config config;
+        QString error;
+        QVERIFY2(hash_core::parseArgs(QStringList{QStringLiteral("file.bin")}, &config, &error),
+                 qPrintable(error));
+        QStringList selected;
+        QVERIFY2(hash_core::selectAlgorithms(config, &selected, &error), qPrintable(error));
+        QCOMPARE(selected.join(u','), QStringLiteral("sha256"));
+    }
+
     void noInputReturnsSentinelMessage() {
         QStringList paths;
         QString error;
