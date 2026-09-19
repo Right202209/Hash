@@ -2,7 +2,6 @@
 
 #include <QByteArray>
 #include <QUrl>
-#include <utility>
 
 namespace hash_core {
 
@@ -23,8 +22,8 @@ QVariantMap CodecTool::base64Decode(const QString &text) {
         }
         cleaned.append(char(code));
     }
-    const QByteArray::FromBase64Result result = QByteArray::fromBase64Encoding(
-        std::move(cleaned), QByteArray::Base64DecodingOption::AbortOnDecodingFailure);
+    const QByteArray::FromBase64Result result =
+        QByteArray::fromBase64Encoding(cleaned, QByteArray::AbortOnBase64DecodingErrors);
     if (result.decodingStatus != QByteArray::Base64DecodingStatus::Ok) {
         return errorOutcome(QStringLiteral("不是有效的 Base64 输入"));
     }

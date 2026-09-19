@@ -30,7 +30,7 @@ bool parseHexColor(const QString &body, Rgba *color) {
     if (body.size() != 3 && body.size() != 4 && body.size() != 6 && body.size() != 8) {
         return false;
     }
-    int digits[8];
+    int digits[8] = {};
     for (int index = 0; index < body.size(); ++index) {
         bool ok = false;
         digits[index] = hexDigit(body.at(index), &ok);
