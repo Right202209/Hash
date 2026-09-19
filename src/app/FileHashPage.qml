@@ -13,6 +13,11 @@ Page {
         icon: "#"
         title: qsTr("文件哈希")
         description: qsTr("批量计算文件摘要 · 单次读取多算法并行 · 支持拖拽与剪贴板比对")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function collectAlgorithms() {

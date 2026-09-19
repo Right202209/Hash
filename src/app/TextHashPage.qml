@@ -12,6 +12,11 @@ Page {
         icon: "≡"
         title: qsTr("文本哈希")
         description: qsTr("计算文本的 MD5、SHA 系列等摘要 · 输入以 UTF-8 编码")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function compute() {

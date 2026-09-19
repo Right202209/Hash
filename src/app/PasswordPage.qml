@@ -10,6 +10,11 @@ Page {
         icon: "⚿"
         title: qsTr("密码生成")
         description: qsTr("按长度与字符集批量生成随机密码 · 使用系统安全随机源")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function generate() {

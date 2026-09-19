@@ -10,6 +10,11 @@ Page {
         icon: "{}"
         title: qsTr("JSON 格式化")
         description: qsTr("格式化、压缩并校验 JSON 文本 · 错误定位到行")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function apply(call) {

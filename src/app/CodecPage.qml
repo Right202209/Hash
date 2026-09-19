@@ -16,6 +16,11 @@ Page {
         title: root.isBase64 ? qsTr("Base64 编解码") : qsTr("URL 编解码")
         description: root.isBase64 ? qsTr("Base64 编码与解码 · 解码容错换行与空白")
                                    : qsTr("URL 百分号编码与解码")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function apply(call) {

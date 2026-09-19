@@ -12,6 +12,11 @@ Page {
         icon: "◐"
         title: qsTr("颜色转换")
         description: qsTr("HEX、RGB 与 HSL 颜色格式互相转换 · 支持 Alpha 通道")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function convert(text) {

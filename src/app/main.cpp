@@ -14,14 +14,63 @@
 #include "tools/uuidtool.h"
 
 #include <QColor>
+#include <QDateTime>
+#include <QDir>
+#include <QFile>
 #include <QFont>
 #include <QGuiApplication>
+#include <QMutex>
 #include <QPalette>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include <QStandardPaths>
+#include <QTextStream>
 #include <QtQml>
 
 namespace {
+
+// guiMessageHandler appends Qt and QML diagnostics to a small log file under
+// the application data directory: the windowsgui subsystem has no console, so
+// a failed launch would otherwise be completely silent. The file is reset
+// once it grows past 512 KiB, keeping the on-disk footprint negligible.
+void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString &message) {
+    static QMutex logMutex;
+    QMutexLocker locker(&logMutex);
+    const QString directory =
+        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    if (directory.isEmpty()) {
+        return;
+    }
+    QDir().mkpath(directory);
+    QFile logFile(directory + QStringLiteral("/gui.log"));
+    if (!logFile.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        return;
+    }
+    if (logFile.size() > 512 * 1024) {
+        logFile.resize(0);
+    }
+    const char *level = "info";
+    switch (type) {
+    case QtDebugMsg:
+        level = "debug";
+        break;
+    case QtInfoMsg:
+        level = "info";
+        break;
+    case QtWarningMsg:
+        level = "warning";
+        break;
+    case QtCriticalMsg:
+        level = "critical";
+        break;
+    case QtFatalMsg:
+        level = "fatal";
+        break;
+    }
+    QTextStream stream(&logFile);
+    stream << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss")) << ' '
+           << level << ": " << message << '\n';
+}
 
 // applyDarkPalette ports the widget theme to Qt Quick: the Basic style
 // renders from the application palette, so one dark palette covers every
@@ -51,6 +100,10 @@ void applyDarkPalette(QGuiApplication &application) {
 
 int main(int argc, char *argv[]) {
     QGuiApplication application(argc, argv);
+    QCoreApplication::setOrganizationName(QStringLiteral("Hash"));
+    QCoreApplication::setApplicationName(QStringLiteral("hash-gui"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.1.0"));
+    qInstallMessageHandler(guiMessageHandler);
     applyDarkPalette(application);
     QQuickStyle::setStyle(QStringLiteral("Basic"));
     QFont font(QStringLiteral("Microsoft YaHei UI"));
@@ -89,6 +142,9 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     engine.loadFromModule("Hash", "Main");
     if (engine.rootObjects().isEmpty()) {
+        qCritical().noquote() << QStringLiteral("QML load failed; the window was not created. "
+                                                "Check the QML diagnostics above and gui.log "
+                                                "under the application data directory.");
         return 1;
     }
     return application.exec();

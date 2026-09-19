@@ -66,4 +66,12 @@ ctest --test-dir build -C Release --output-on-failure
 
 构建产物为 `hash.exe`（CLI，控制台子系统）与 `hash-gui.exe`（GUI，windowsgui 子系统）。Qt 程序发布时需要随附 Qt 运行库：用 `windeployqt` 组装发布目录，CI 的 release workflow 会自动完成并打包为 zip。
 
+**本地运行 GUI**：直接双击刚构建出的 `hash-gui.exe` 会因缺少 Qt 运行库（DLL 与 QML 模块插件）而无法启动，需要先组装运行时：
+
+```text
+windeployqt --release --qmldir src/app build\Release\hash-gui.exe
+```
+
+GUI 子系统没有控制台，QML 诊断会写入 `%LOCALAPPDATA%\Hash\hash-gui\gui.log`；启动失败（窗口未创建）时会记录明确的错误条目，可据此排查缺哪个模块。
+
 程序不上传文件内容，也不要求管理员权限。MD5、SHA-1、CRC、Adler-32 和 FNV 仅用于兼容性、错误检测或非加密场景，不提供现代碰撞安全性。

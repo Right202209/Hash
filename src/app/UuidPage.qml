@@ -10,6 +10,11 @@ Page {
         icon: "⚿"
         title: qsTr("UUID 生成")
         description: qsTr("批量生成 UUID v4 · 可控制大小写、大括号与连字符")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function generate() {

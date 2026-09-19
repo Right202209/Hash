@@ -12,6 +12,11 @@ Page {
         icon: "01"
         title: qsTr("进制转换")
         description: qsTr("在 2-36 进制之间转换整数值 · 支持负数")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function convert() {

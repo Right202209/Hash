@@ -13,6 +13,11 @@ Page {
         icon: "⏱"
         title: qsTr("时间戳")
         description: qsTr("Unix 时间戳与日期时间互相转换 · 本地时区与 UTC 双显示")
+        onBackRequested: {
+            if (root.StackView.view) {
+                root.StackView.view.pop()
+            }
+        }
     }
 
     function convertStamp() {

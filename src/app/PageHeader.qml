@@ -3,13 +3,16 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 // PageHeader is the shared tool page header: back button, glyph, title and
-// description. It pops the page through the attached StackView.
+// description. The page wires backRequested to its own StackView, which is
+// where the attached property is guaranteed to resolve.
 Item {
     id: root
 
     property string icon: ""
     property string title: ""
     property string description: ""
+
+    signal backRequested()
 
     implicitHeight: 60
 
@@ -22,11 +25,7 @@ Item {
         ToolButton {
             text: qsTr("←")
             font.pixelSize: 18
-            onClicked: {
-                if (root.StackView.view) {
-                    root.StackView.view.pop()
-                }
-            }
+            onClicked: root.backRequested()
         }
         Label {
             Layout.preferredWidth: 34
