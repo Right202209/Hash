@@ -26,6 +26,19 @@ jobs:
         run: cmake --build build --parallel
       - name: Test
         run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Dump generated QML module metadata
+        run: |
+          find build -name qmldir -print -exec cat {} \;
+          find build -name "*.qmltypes" -print
+          find build -name "*qmltyperegistration*" -print
+      - name: Smoke run GUI headless
+        run: |
+          timeout 10 env QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+            QML_IMPORT_TRACE=1 ./build/hash-gui
+          code=$?
+          echo "exit=$code"
+          # 124 = the timeout killed a still-running window: launch succeeded.
+          test "$code" = 124
 
   windows:
     runs-on: windows-latest
