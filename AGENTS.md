@@ -2,14 +2,15 @@
 
 ## Project Structure & Module Organization
 
-`hash` is a C++17 + Qt 6 project providing a Windows-focused batch file hashing tool with CLI and GUI entry points.
+`hash` is a C++17 + Qt 6 project providing a Windows-focused file toolbox (batch file hashing plus uTools-style utilities) with CLI and GUI entry points.
 
 - `src/core/` — streaming hash engine: digester implementations (Qt `QCryptographicHash` plus built-in Adler-32, CRC-32/64, FNV, SHA-512/224, SHA-512/256), the algorithm registry, single-file hashing and batch orchestration.
 - `src/common/` — shared utilities: atomic output-file replacement with input-file protection, platform-aware path keys, digest-listing parsing and comparison, Go-style string quoting helpers, filesystem path conversions.
 - `src/cli/` — command-line entry point, argument parsing, path expansion, and text/TSV/JSON output formatting.
-- `src/app/` — Qt Widgets GUI: main window, dark theme, hashing worker thread.
+- `src/tools/` — toolbox backends in a QtCore-only static library `hash_tools`: tool-registry, algorithm-registry and file-queue models, the threaded `HashController` for batch hashing from the GUI, and one small QObject controller per tool (text digest, Base64/URL codec, JSON, timestamp, UUID, radix, color, password).
+- `src/app/` — Qt Quick (QML) GUI: a launcher-style shell (command bar, tool grid, lazy-loaded tool pages), QML singletons for theme and notifications, plus `main.cpp` (dark application palette, singleton registration) and the clipboard service.
 - `tests/` — Qt Test suites in `test_*.h`, driven by `tests/main.cpp`.
-- `CMakeLists.txt` — one static library `hash_core` plus the `hash` (console) and `hash-gui` (windowsgui) executables and the `hash_tests` runner.
+- `CMakeLists.txt` — static libraries `hash_core` and `hash_tools` plus the `hash` (console) and `hash-gui` (windowsgui, QML compiled in via `qt_add_qml_module`) executables and the `hash_tests` runner.
 
 ## Build, Test, and Development Commands
 
