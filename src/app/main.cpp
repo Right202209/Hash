@@ -27,15 +27,20 @@
 #include <QTextStream>
 #include <QtQml>
 
+#include <cstdio>
+
 namespace {
 
 // guiMessageHandler appends Qt and QML diagnostics to a small log file under
-// the application data directory: the windowsgui subsystem has no console, so
-// a failed launch would otherwise be completely silent. The file is reset
-// once it grows past 512 KiB, keeping the on-disk footprint negligible.
+// the application data directory and mirrors them to stderr: the windowsgui
+// subsystem has no console, so a failed launch would otherwise be completely
+// silent, while CI smoke runs need the console output. The file is reset once
+// it grows past 512 KiB, keeping the on-disk footprint negligible.
 void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString &message) {
     static QMutex logMutex;
     QMutexLocker locker(&logMutex);
+    std::fprintf(stderr, "%s\n", qUtf8Printable(message));
+    std::fflush(stderr);
     const QString directory =
         QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     if (directory.isEmpty()) {
@@ -141,11 +146,13 @@ int main(int argc, char *argv[]) {
 
     QQmlApplicationEngine engine;
     engine.loadFromModule("Hash", "Main");
+    qInfo() << "QML load finished with" << engine.rootObjects().size() << "root object(s)";
     if (engine.rootObjects().isEmpty()) {
         qCritical().noquote() << QStringLiteral("QML load failed; the window was not created. "
                                                 "Check the QML diagnostics above and gui.log "
                                                 "under the application data directory.");
         return 1;
     }
+    qInfo() << "entering event loop";
     return application.exec();
 }
