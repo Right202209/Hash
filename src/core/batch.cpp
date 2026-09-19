@@ -7,8 +7,21 @@
 #include <thread>
 #include <vector>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace hash_core {
 namespace {
+
+// Chunk-level progress is forwarded to the tracker at most every 8 MiB per
+// file: the mutex and callback round-trip per 1 MiB read chunk would otherwise
+// dominate the CPU profile of fast storage while adding nothing to a UI that
+// refreshes at ~10 Hz.
+constexpr qint64 kProgressChunkBytes = 8 * 1024 * 1024;
 
 // progressTracker serializes progress updates so that the shared counters
 // stay consistent. The user callback is always invoked after the lock is
@@ -96,7 +109,13 @@ QVector<FileResult> hashFiles(const QVector<FileRequest> &requests, const BatchO
 
             HashOptions hashOptions = options.hash;
             hashOptions.canceled = canceled;
-            hashOptions.progress = [&tracker, &callback = options.progress](qint64 bytesRead) {
+            qint64 reportedBytes = 0;
+            hashOptions.progress = [&tracker, &callback = options.progress,
+                                    &reportedBytes](qint64 bytesRead) {
+                if (bytesRead - reportedBytes < kProgressChunkBytes) {
+                    return;
+                }
+                reportedBytes = bytesRead;
                 emitProgress(callback, tracker.update([bytesRead](Progress &progress) {
                     progress.currentBytes = bytesRead;
                 }));
@@ -125,6 +144,14 @@ QVector<FileResult> hashFiles(const QVector<FileRequest> &requests, const BatchO
     for (int worker = 0; worker < workers; ++worker) {
         threads.emplace_back(workerLoop);
     }
+#ifdef _WIN32
+    // Hashing is throughput work that must not starve the UI thread or other
+    // applications: run the workers slightly below normal priority. Throughput
+    // keeps the same ceiling when nothing else competes for the CPU.
+    for (std::thread &thread : threads) {
+        ::SetThreadPriority(thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+    }
+#endif
     for (std::thread &thread : threads) {
         thread.join();
     }

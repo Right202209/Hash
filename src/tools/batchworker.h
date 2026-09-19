@@ -7,6 +7,7 @@
 #include <QObject>
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 namespace hash_core {
 
@@ -26,20 +27,24 @@ class BatchWorker : public QObject {
         BatchOptions options;
         options.canceled = [this]() { return mCancel->load(std::memory_order_relaxed); };
 
-        // The engine reports progress per read chunk. Emit on every file
-        // change and at most every 100 ms otherwise, which keeps the UI
-        // responsive without flooding the event loop.
+        // Worker threads report file changes and chunk progress. Forward at
+        // most one snapshot per 100 ms to the GUI thread: the engine callback
+        // may fire from every worker concurrently (hence the mutex), and an
+        // unthrottled burst over a large queue would flood the event loop and
+        // burn CPU on QML updates that users cannot perceive.
         QElapsedTimer throttle;
         throttle.start();
         qint64 lastEmit = -1000;
-        QString lastPath;
+        std::mutex emitMutex;
         options.progress = [&](const Progress &progress) {
-            const bool pathChanged = progress.currentPath != lastPath;
-            if (!pathChanged && throttle.elapsed() - lastEmit < 100) {
-                return;
+            {
+                const std::lock_guard<std::mutex> lock(emitMutex);
+                const qint64 elapsed = throttle.elapsed();
+                if (elapsed - lastEmit < 100) {
+                    return;
+                }
+                lastEmit = elapsed;
             }
-            lastPath = progress.currentPath;
-            lastEmit = throttle.elapsed();
             emit progressChanged(progress);
         };
 
