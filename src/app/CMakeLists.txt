@@ -15,10 +15,13 @@ set_source_files_properties(Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(Toast.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 # The QML files are compiled into the binary (qmlcachegen), so the shipped
-# application carries no loose .qml files.
+# application carries no loose .qml files. The prefix is pinned because the
+# engine's default import path contains qrc:/qt/qml; with the default prefix
+# of "/" the module would be invisible to loadFromModule.
 qt_add_qml_module(hash-gui
     URI Hash
     VERSION 1.0
+    RESOURCE_PREFIX /qt/qml
     QML_FILES
         Main.qml
         Theme.qml

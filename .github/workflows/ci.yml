@@ -33,10 +33,13 @@ jobs:
           find build -name "*qmltyperegistration*" -print
       - name: Smoke run GUI headless
         run: |
+          set +e
           timeout 10 env QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
             QML_IMPORT_TRACE=1 ./build/hash-gui
           code=$?
+          set -e
           echo "exit=$code"
+          cat "$HOME/.local/share/Hash/hash-gui/gui.log" || true
           # 124 = the timeout killed a still-running window: launch succeeded.
           test "$code" = 124
 
