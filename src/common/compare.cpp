@@ -337,12 +337,25 @@ CompareSummary compareRecords(const QVector<CompareRecord> &expected,
     const QSet<QString> expectedValues = values(expected);
     const QSet<QString> actualValues = values(actual);
 
+    // A bare-digest paste verifies by value: when the actual side has no full
+    // records at all, expected records must not be counted as missing just
+    // because no keyed counterpart exists.
+    bool actualHasKeyedRecords = false;
+    for (const CompareRecord &record : actual) {
+        if (!record.loose) {
+            actualHasKeyedRecords = true;
+            break;
+        }
+    }
+
     CompareSummary summary;
     summary.duplicates = expectedDuplicates + actualDuplicates;
     for (auto it = expectedMap.constBegin(); it != expectedMap.constEnd(); ++it) {
         const auto found = actualMap.constFind(it.key());
         if (found == actualMap.constEnd()) {
-            summary.missing += 1;
+            if (actualHasKeyedRecords) {
+                summary.missing += 1;
+            }
             continue;
         }
         if (found.value() == it.value()) {

@@ -115,10 +115,14 @@ class TestCompare : public QObject {
         QVERIFY(records.at(0).loose);
 
         const QVector<hash_core::CompareRecord> expected = {
-            {QStringLiteral("sha256"), digest, QStringLiteral("empty.bin")}};
+            {QStringLiteral("sha256"), digest, QStringLiteral("empty.bin")},
+            {QStringLiteral("md5"), QStringLiteral("d41d8cd98f00b204e9800998ecf8427e"),
+             QStringLiteral("other.bin")}};
         const hash_core::CompareSummary summary = hash_core::compareRecords(expected, records);
         QCOMPARE(summary.matches, 1);
         QCOMPARE(summary.mismatches, 0);
+        // The paste is a bare-digest verification, so the expected record not
+        // covered by it must not be counted as missing.
         QCOMPARE(summary.missing, 0);
         QCOMPARE(summary.unexpected, 0);
         QVERIFY(summary.exact);
