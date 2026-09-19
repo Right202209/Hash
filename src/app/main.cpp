@@ -19,6 +19,7 @@
 #include <QPalette>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
+#include <QtQml>
 
 namespace {
 

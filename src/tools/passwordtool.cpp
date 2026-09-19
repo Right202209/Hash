@@ -82,8 +82,10 @@ QVariantMap PasswordTool::generate(int length, int count, bool upper, bool lower
             ++position;
         }
         for (int tail = length - 1; tail > 0; --tail) {
-            const int swap = random->bounded(tail + 1);
-            password.swapItemsAt(tail, swap);
+            const int swapWith = random->bounded(tail + 1);
+            const QChar held = password.at(tail);
+            password[tail] = password.at(swapWith);
+            password[swapWith] = held;
         }
         passwords.append(password);
     }

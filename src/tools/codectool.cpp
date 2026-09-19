@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QUrl>
+#include <utility>
 
 namespace hash_core {
 
@@ -22,9 +23,9 @@ QVariantMap CodecTool::base64Decode(const QString &text) {
         }
         cleaned.append(char(code));
     }
-    const QByteArray::FromBase64Result result =
-        QByteArray::fromBase64Encoding(cleaned, QByteArray::AbortOnDecodingFailure);
-    if (result.decodingStatus != QByteArray::DecodingStatus::Ok) {
+    const QByteArray::FromBase64Result result = QByteArray::fromBase64Encoding(
+        std::move(cleaned), QByteArray::Base64DecodingOption::AbortOnDecodingFailure);
+    if (result.decodingStatus != QByteArray::Base64DecodingStatus::Ok) {
         return errorOutcome(QStringLiteral("不是有效的 Base64 输入"));
     }
     return textOutcome(QString::fromUtf8(result.decoded));
@@ -35,7 +36,8 @@ QVariantMap CodecTool::urlEncode(const QString &text) {
 }
 
 QVariantMap CodecTool::urlDecode(const QString &text) {
-    return textOutcome(QString::fromUtf8(QUrl::fromPercentEncoding(text.toUtf8())));
+    // fromPercentEncoding already returns decoded text.
+    return textOutcome(QUrl::fromPercentEncoding(text.toUtf8()));
 }
 
 QVariantMap CodecTool::textOutcome(const QString &text) {
