@@ -36,7 +36,8 @@ class TestColorTool : public QObject {
 
     void parsesEightDigitHexAlpha() {
         hash_core::ColorTool tool;
-        const QVariantMap outcome = tool.convert(QStringLiteral("#80FFFFFF"));
+        // CSS order: the alpha channel is the last pair.
+        const QVariantMap outcome = tool.convert(QStringLiteral("#FFFFFF80"));
         QCOMPARE(outcome.value("ok").toBool(), true);
         QCOMPARE(outcome.value("hex").toString(), QStringLiteral("#FFFFFF"));
         QCOMPARE(outcome.value("rgba").toString(), QStringLiteral("rgba(255, 255, 255, 0.50)"));

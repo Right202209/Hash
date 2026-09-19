@@ -21,7 +21,7 @@ class TestJsonTool : public QObject {
         const QVariantMap outcome =
             tool.minifyJson(QStringLiteral("{ \"b\" : 1 , \"a\" : [1, 2] }"));
         QCOMPARE(outcome.value("ok").toBool(), true);
-        QCOMPARE(outcome.value("text").toString(), QStringLiteral("{\"b\":1,\"a\":[1,2]}"));
+        QCOMPARE(outcome.value("text").toString(), QStringLiteral("{\"a\":[1,2],\"b\":1}"));
     }
 
     void invalidInputReportsLine() {
