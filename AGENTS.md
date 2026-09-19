@@ -2,52 +2,45 @@
 
 ## Project Structure & Module Organization
 
-`hash` is a Go 1.23 module providing a Windows-focused batch file hashing tool with CLI and native GUI entry points.
+`hash` is a C++17 + Qt 6 project providing a Windows-focused batch file hashing tool with CLI and GUI entry points.
 
-- `cmd/hash/` — CLI entry point (`main.go`).
-- `cmd/hash-gui/` — GUI entry point, Windows-only (`main_windows.go`).
-- `internal/engine/` — streaming hash computation, batch orchestration, and shared types.
-- `internal/registry/` — algorithm registry and constructor wiring.
-- `internal/atomicfile/` — atomic output-file replacement with input-file protection.
-- `internal/pathutil/` — platform-aware path normalization shared by the CLI and the comparison code.
-- `internal/cli/` — argument parsing, path expansion, and output formatting.
-- `internal/compare/` — parsing and comparison of expected versus actual digests.
-- `internal/gui/` — Windows GUI window management, layout, theme, and progress handling.
-- `scripts/build.ps1` — PowerShell build/test script.
-
-Tests live beside the code as `*_test.go`. Windows-specific files use the `_windows.go` suffix plus `//go:build windows`; non-Windows fallbacks use `_nonwindows.go`.
+- `src/core/` — streaming hash engine: digester implementations (Qt `QCryptographicHash` plus built-in Adler-32, CRC-32/64, FNV, SHA-512/224, SHA-512/256), the algorithm registry, single-file hashing and batch orchestration.
+- `src/common/` — shared utilities: atomic output-file replacement with input-file protection, platform-aware path keys, digest-listing parsing and comparison, Go-style string quoting helpers, filesystem path conversions.
+- `src/cli/` — command-line entry point, argument parsing, path expansion, and text/TSV/JSON output formatting.
+- `src/app/` — Qt Widgets GUI: main window, dark theme, hashing worker thread.
+- `tests/` — Qt Test suites in `test_*.h`, driven by `tests/main.cpp`.
+- `CMakeLists.txt` — one static library `hash_core` plus the `hash` (console) and `hash-gui` (windowsgui) executables and the `hash_tests` runner.
 
 ## Build, Test, and Development Commands
 
-Agents must not run these locally; GitHub Actions is the only place tests and builds execute. The commands below document what CI runs.
+Agents must not run builds or tests locally; GitHub Actions is the only place builds and tests execute. The commands below document what CI runs.
 
-CI workflow: `.github/workflows/ci.yml` (format check, vet, tests, race tests, and Windows builds).
+CI workflow: `.github/workflows/ci.yml` (clang-format check plus Qt builds and tests on Ubuntu and Windows; the Windows job produces the release binaries).
 
 ```text
-go test ./...                 # run the full test suite
-go test -race ./...           # run tests with the race detector
-go vet ./...                  # static checks
-gofmt -l .                    # list unformatted files
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o hash.exe ./cmd/hash
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -H=windowsgui" -o hash-gui.exe ./cmd/hash-gui
-pwsh ./scripts/build.ps1      # test, race-test, and build both binaries
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure --no-tests=error
+clang-format --dry-run -Werror $(git ls-files '*.cpp' '*.h')
 ```
+
+Release workflow: `.github/workflows/release.yml` builds on Windows on `v*` tags, assembles `hash.exe`, `hash-gui.exe` and the Qt runtime with `windeployqt`, and publishes a zip plus a SHA-256 checksum file on the GitHub release.
 
 ## Coding Style & Naming Conventions
 
-Follow standard Go style: tabs for indentation, `gofmt`-clean code, and `go vet` passing. Exported identifiers use `CamelCase`; unexported helpers use `camelCase`. Keep packages small and single-purpose under `internal/`. Wrap errors with context using `fmt.Errorf("...: %w", err)`. Algorithm names are lowercase registry keys (for example `sha256`, `crc32-ieee`).
+Formatting is enforced by `.clang-format` (LLVM base, 4-space indent, 100-column limit); run clang-format before submitting. Types use `PascalCase`, functions and methods use `camelCase`, member variables carry the `m` prefix (for example `mQueue`), and constants use `kPascalCase`. Prefer Qt containers in interface signatures. Errors are returned as empty-or-populated `QString` messages (or boolean returns with an out-param); do not use exceptions for control flow. Keep modules small and single-purpose under `src/`. Algorithm names are lowercase registry keys (for example `sha256`, `crc32-ieee`). Source files are UTF-8; MSVC builds pass `/utf-8`.
 
 ## Testing Guidelines
 
-Use the standard `testing` package with table-driven tests where practical. Test functions are named `TestXxx_Behavior` (for example `TestHashFile_OneReadComputesEveryRequestedAlgorithm`). Prefer `t.TempDir()` for filesystem fixtures and call `t.Parallel()` where safe. Add or update tests as needed, but never execute them locally.
+Use the Qt Test framework: one `QObject` test class per `tests/test_*.h` header with private slots named after the behavior (for example `oneReadComputesEveryRequestedAlgorithm`), registered in `tests/main.cpp`. Use `QTemporaryDir` for filesystem fixtures, `QSKIP` when a platform feature (hard links, symlinks) is unavailable, and guard platform-dependent expectations with `#ifdef Q_OS_WIN`. Add or update tests as needed, but never execute them locally.
 
 ## Commit & Pull Request Guidelines
 
-Commits use short, imperative, capitalized subjects (for example `Add Windows-specific GUI layout, theme, and progress handling`). Keep each commit focused. Pull requests should describe the change, note affected packages, link related issues, and include screenshots for GUI changes. Rely on GitHub Actions for test results and note any Windows-only behavior that could not be verified locally.
+Commits use short, imperative, capitalized subjects (for example `Rewrite the hashing tool in C++ with Qt 6`). Keep each commit focused. Pull requests should describe the change, note affected modules, link related issues, and include screenshots for GUI changes. Rely on GitHub Actions for build and test results and note any Windows-only behavior that could not be verified.
 
 ## Agent-Specific Instructions
 
-- Modify project source, tests, and documentation only; never run the project, its binaries, or its test suite.
-- All test and build execution happens in GitHub Actions. Rely on CI results instead of local runs.
-- Do not add local test or build steps to your workflow. If verification is needed, update or extend the CI workflow and let it run.
+- Modify project source, tests, and documentation only; never run the project, its binaries, its build, or its test suite.
+- All build and test execution happens in GitHub Actions. Rely on CI results instead of local runs.
+- Do not add local build or test steps to your workflow. If verification is needed, update or extend the CI workflows and let them run.
 - When a change cannot be validated without running code, state that clearly in the pull request instead of running it.
