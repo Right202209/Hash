@@ -86,7 +86,8 @@ class TestHashController : public QObject {
             model->index(0, 0).data(hash_core::HashFileModel::DigestsRole).toList();
         const QString digest = digests.at(0).toMap().value("value").toString();
 
-        controller.compareClipboard(QStringLiteral("md5\t%1\t%2").arg(digest, hash_core::goQuote(file)));
+        controller.compareClipboard(
+            QStringLiteral("md5\t%1\t%2").arg(digest, hash_core::goQuote(file)));
         QVERIFY(controller.compare().value("valid").toBool());
         QCOMPARE(controller.compare().value("matches").toInt(), 1);
         QCOMPARE(controller.compare().value("exact").toBool(), true);
