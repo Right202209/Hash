@@ -37,20 +37,34 @@ target_link_libraries(hash_core PUBLIC Qt6::Core)
 
 # hash_tools hosts the toolbox backends: Qt object models and tool controllers
 # that the QML layer binds to. It stays QtCore-only so the tests exercise it
-# without a display server.
+# without a display server. Headers with Q_OBJECT are listed so AUTOMOC
+# processes them regardless of include-path resolution.
 add_library(hash_tools STATIC
+    src/tools/batchworker.h
     src/tools/toolregistrymodel.cpp
+    src/tools/toolregistrymodel.h
     src/tools/algorithmsmodel.cpp
+    src/tools/algorithmsmodel.h
     src/tools/hashfilemodel.cpp
+    src/tools/hashfilemodel.h
     src/tools/hashcontroller.cpp
+    src/tools/hashcontroller.h
     src/tools/textdigesttool.cpp
+    src/tools/textdigesttool.h
     src/tools/codectool.cpp
+    src/tools/codectool.h
     src/tools/jsontool.cpp
+    src/tools/jsontool.h
     src/tools/timestamptool.cpp
+    src/tools/timestamptool.h
     src/tools/uuidtool.cpp
+    src/tools/uuidtool.h
     src/tools/radixtool.cpp
+    src/tools/radixtool.h
     src/tools/colortool.cpp
+    src/tools/colortool.h
     src/tools/passwordtool.cpp
+    src/tools/passwordtool.h
 )
 target_include_directories(hash_tools PUBLIC src)
 target_link_libraries(hash_tools PUBLIC hash_core Qt6::Core)
@@ -61,6 +75,7 @@ target_link_libraries(hash PRIVATE hash_core)
 qt_add_executable(hash-gui WIN32
     src/app/main.cpp
     src/app/clipservice.cpp
+    src/app/clipservice.h
 )
 target_link_libraries(hash-gui PRIVATE hash_tools Qt6::Quick Qt6::QuickControls2)
 
