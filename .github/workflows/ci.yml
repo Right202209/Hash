@@ -6,49 +6,42 @@ on:
   pull_request:
 
 jobs:
-  test:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
         with:
-          go-version: "1.23"
+          version: "6.8.*"
+          host: linux
           cache: true
+      - name: Install tooling
+        run: sudo apt-get update && sudo apt-get install -y clang-format libgl1-mesa-dev
       - name: Format check
-        run: test -z "$(gofmt -l .)"
-      - name: Vet
-        run: go vet ./...
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.61.0
-      - name: Test with coverage
-        run: go test -covermode=atomic -coverprofile=coverage.out ./...
-      - name: Enforce coverage floor
-        run: |
-          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/, "", $3); print $3}')
-          echo "total coverage: ${total}%"
-          awk -v total="$total" 'BEGIN { if (total + 0 < 40) { printf "coverage %.1f%% is below the 40%% floor\n", total; exit 1 } }'
-      - name: Race test
-        run: go test -race ./...
+        run: clang-format --dry-run -Werror $(git ls-files '*.cpp' '*.h')
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error
 
-  build:
-    runs-on: ubuntu-latest
+  windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
         with:
-          go-version: "1.23"
+          version: "6.8.*"
+          host: windows
           cache: true
-      - name: Build CLI
-        env:
-          GOOS: windows
-          GOARCH: amd64
-          CGO_ENABLED: "0"
-        run: go build -trimpath -ldflags "-s -w" -o hash.exe ./cmd/hash
-      - name: Build GUI
-        env:
-          GOOS: windows
-          GOARCH: amd64
-          CGO_ENABLED: "0"
-        run: go build -trimpath -ldflags "-s -w -H=windowsgui" -o hash-gui.exe ./cmd/hash-gui
+      - name: Configure MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error

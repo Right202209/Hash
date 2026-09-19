@@ -9,36 +9,38 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
         with:
-          go-version: "1.23"
+          version: "6.8.*"
+          host: windows
           cache: true
-      - name: Test
-        run: go test ./...
-      - name: Build CLI
-        env:
-          GOOS: windows
-          GOARCH: amd64
-          CGO_ENABLED: "0"
-        run: go build -trimpath -ldflags "-s -w" -o hash.exe ./cmd/hash
-      - name: Build GUI
-        env:
-          GOOS: windows
-          GOARCH: amd64
-          CGO_ENABLED: "0"
-        run: go build -trimpath -ldflags "-s -w -H=windowsgui" -o hash-gui.exe ./cmd/hash-gui
-      - name: Stage release artifacts
+      - name: Configure MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Stage and deploy
+        shell: pwsh
         run: |
-          mkdir dist
-          cp hash.exe "dist/hash-${GITHUB_REF_NAME}-windows-amd64.exe"
-          cp hash-gui.exe "dist/hash-gui-${GITHUB_REF_NAME}-windows-amd64.exe"
-          (cd dist && sha256sum -- * > sha256sums.txt)
+          $version = $env:GITHUB_REF_NAME
+          $dir = "dist/hash-$version-windows-amd64"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          Copy-Item build/Release/hash.exe, build/Release/hash-gui.exe $dir/
+          windeployqt --release --no-translations --compiler-runtime --dir $dir build/Release/hash-gui.exe
+          Compress-Archive -Path $dir -DestinationPath "dist/hash-$version-windows-amd64.zip"
+          $zip = "hash-$version-windows-amd64.zip"
+          (Get-FileHash "dist/$zip" -Algorithm SHA256).Hash.ToLower() + "  $zip" |
+            Set-Content "dist/sha256sums.txt"
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/*.zip
+            dist/sha256sums.txt
           generate_release_notes: true
           fail_on_unmatched_files: true
