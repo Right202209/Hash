@@ -170,20 +170,24 @@ class TestHasher : public QObject {
         QVERIFY(message.isEmpty());
     }
 
-    void changedDetectsModificationAfterHashing() {
-        const QString path = writeFile(QByteArray("original"));
-        const hash_core::HashOutcome first = hash_core::hashFile(path, {QStringLiteral("sha256")});
-        QVERIFY2(first.error.isEmpty(), qPrintable(first.error));
-        QVERIFY(!first.result.changed);
+    void changedDetectsModificationDuringHashing() {
+        const QString path = writeFile(QByteArray(4096, 'a'));
+        const hash_core::HashOutcome stable = hash_core::hashFile(path, {QStringLiteral("sha256")});
+        QVERIFY2(stable.error.isEmpty(), qPrintable(stable.error));
+        QVERIFY(!stable.result.changed);
 
-        // Rewrite the file, then hash again: the size differs, which the
-        // changed detection must observe.
-        QFile file(path);
-        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        QCOMPARE(file.write("original-with-more-bytes"), qint64(24));
-        file.close();
-        const hash_core::HashOutcome second = hash_core::hashFile(path, {QStringLiteral("sha256")});
-        QVERIFY2(second.error.isEmpty(), qPrintable(second.error));
-        QVERIFY(second.result.changed);
+        // The progress callback runs between reads, before the post-hash
+        // stat, so truncating there makes the file change while it is being
+        // hashed, which the changed detection must observe.
+        hash_core::HashOptions options;
+        options.progress = [&path](qint64) {
+            QFile replacement(path);
+            QVERIFY(replacement.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            QCOMPARE(replacement.write("x"), qint64(1));
+        };
+        const hash_core::HashOutcome outcome =
+            hash_core::hashFileWithOptions(path, {QStringLiteral("sha256")}, options);
+        QVERIFY2(outcome.error.isEmpty(), qPrintable(outcome.error));
+        QVERIFY(outcome.result.changed);
     }
 };
