@@ -100,6 +100,26 @@ class TestHashController : public QObject {
         QCOMPARE(controller.compare().value("exact").toBool(), false);
     }
 
+    void compareClipboardAcceptsPrefixedDigest() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString file = writeFile(dir, "file.txt", "abc");
+
+        hash_core::HashController controller;
+        QCOMPARE(controller.addFiles({QUrl::fromLocalFile(file)}).value("added").toInt(), 1);
+        controller.start({QStringLiteral("sha256")});
+        QTRY_COMPARE_WITH_TIMEOUT(controller.busy(), false, 30000);
+
+        const QString digest = QString::fromLatin1(
+            QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Sha256).toHex());
+        // A digest pasted with an "sha256:" tag (full-width colon and
+        // surrounding whitespace included) verifies without any manual edit.
+        controller.compareClipboard(QStringLiteral("  SHA256：%1\n").arg(digest));
+        QVERIFY(controller.compare().value("valid").toBool());
+        QCOMPARE(controller.compare().value("matches").toInt(), 1);
+        QCOMPARE(controller.compare().value("exact").toBool(), true);
+    }
+
     void compareWithoutResultsReportsError() {
         hash_core::HashController controller;
         controller.compareClipboard(QStringLiteral("md5\td41d8cd98f00b204e9800998ecf8427e\tx"));
