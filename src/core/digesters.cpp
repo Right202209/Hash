@@ -52,6 +52,10 @@ static const quint64 kSha512_256Iv[8] = {
     0x96283ee2a88effe3ULL, 0xbe5e1e2553863992ULL, 0x2b0199fc2c85b8aaULL, 0x0eb72ddc81c52ca2ULL,
 };
 
+QByteArray fixedHex(int width, quint64 value) {
+    return QByteArray::number(value, 16).rightJustified(width, '0');
+}
+
 // ---------------------------------------------------------------------------
 // Qt-backed digester for the standard algorithms.
 // ---------------------------------------------------------------------------
@@ -413,10 +417,6 @@ class Sha512Digester final : public Digester {
     quint64 m_byteCount = 0;
     int m_digestBytes;
 };
-
-QByteArray fixedHex(int width, quint64 value) {
-    return QByteArray::number(value, 16).rightJustified(width, '0');
-}
 
 } // namespace
 

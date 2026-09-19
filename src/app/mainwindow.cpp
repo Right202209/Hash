@@ -503,9 +503,9 @@ void MainWindow::rebuildQueue() {
     mQueue->clear();
     mRowIndexByPath.clear();
     for (int index = 0; index < mPaths.size(); ++index) {
+        // The QTreeWidgetItem constructor already inserts into the tree.
         auto *item = new QTreeWidgetItem(mQueue);
         item->setText(0, mPaths.at(index));
-        mQueue->addTopLevelItem(item);
         mQueueRows.append(item);
         mRowIndexByPath.insert(hash_core::pathKey(mPaths.at(index)), index);
         updateQueueRow(index);

@@ -1,6 +1,7 @@
 #include "common/compare.h"
 
 #include "common/pathkey.h"
+#include "common/quoting.h"
 
 #include <QHash>
 #include <QSet>

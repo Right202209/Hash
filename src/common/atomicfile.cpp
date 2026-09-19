@@ -73,7 +73,8 @@ QString writeAtomicFile(const QString &path, const QStringList &inputs, const QB
         temporary.remove();
         return error;
     }
-    if (!temporary.close()) {
+    temporary.close();
+    if (temporary.error() != QFileDevice::NoError) {
         error = QStringLiteral("close temporary output: ") + temporary.errorString();
         temporary.remove();
         return error;

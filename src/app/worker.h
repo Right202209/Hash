@@ -3,6 +3,7 @@
 #include "core/batch.h"
 #include "core/types.h"
 
+#include <QMetaType>
 #include <QObject>
 #include <atomic>
 

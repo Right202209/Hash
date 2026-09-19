@@ -18,8 +18,6 @@ namespace {
 
 std::atomic<bool> gCanceled{false};
 
-extern "C" void handleSignal(int) { gCanceled.store(true, std::memory_order_relaxed); }
-
 void writeStream(std::FILE *stream, const QString &text) {
     const QByteArray encoded = text.toUtf8();
     std::fwrite(encoded.constData(), 1, size_t(encoded.size()), stream);
@@ -39,6 +37,8 @@ int exitCodeForResults(const QVector<hash_core::FileResult> &results, bool failF
 }
 
 } // namespace
+
+extern "C" void handleSignal(int) { gCanceled.store(true, std::memory_order_relaxed); }
 
 int main(int argc, char *argv[]) {
     QCoreApplication app(argc, argv);

@@ -156,7 +156,8 @@ bool goUnquote(const QString &value, QString *out, QString *error) {
                 return fail();
             }
             if (code > 0xFFFF) {
-                decoded += QString::fromUcs4(&char32_t(code), 1);
+                const char32_t scalar = char32_t(code);
+                decoded += QString::fromUcs4(&scalar, 1);
             } else {
                 decoded += QChar(char16_t(code));
             }

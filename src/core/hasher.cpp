@@ -120,7 +120,7 @@ HashOutcome hashFileWithOptions(const QString &path, const QStringList &algorith
         digesters.push_back(spec.create());
     }
 
-    std::vector<char> buffer(size_t(bufferSize));
+    const std::vector<char> buffer(static_cast<size_t>(bufferSize), char{});
     qint64 bytesRead = 0;
     auto partial = [&path, &bytesRead]() {
         Result result;
