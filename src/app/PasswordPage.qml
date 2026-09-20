@@ -44,7 +44,7 @@ Page {
                     text: qsTr("长度")
                     color: Theme.muted
                 }
-                SpinBox {
+                AppSpinBox {
                     id: lengthSpin
 
                     from: 4
@@ -60,7 +60,7 @@ Page {
                     text: qsTr("数量")
                     color: Theme.muted
                 }
-                SpinBox {
+                AppSpinBox {
                     id: countSpin
 
                     from: 1
@@ -69,31 +69,31 @@ Page {
                     editable: true
                 }
             }
-            CheckBox {
+            AppCheckBox {
                 id: upperCheck
 
                 text: qsTr("大写字母")
                 checked: true
             }
-            CheckBox {
+            AppCheckBox {
                 id: lowerCheck
 
                 text: qsTr("小写字母")
                 checked: true
             }
-            CheckBox {
+            AppCheckBox {
                 id: digitCheck
 
                 text: qsTr("数字")
                 checked: true
             }
-            CheckBox {
+            AppCheckBox {
                 id: symbolCheck
 
                 text: qsTr("符号")
                 checked: true
             }
-            CheckBox {
+            AppCheckBox {
                 id: safeCheck
 
                 text: qsTr("排除易混淆字符")
@@ -105,12 +105,12 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("生成")
                 highlighted: true
                 onClicked: root.generate()
             }
-            Button {
+            AppButton {
                 text: qsTr("复制全部")
                 enabled: output.text !== ""
                 onClicked: Clipboard.copy(output.text)
@@ -126,7 +126,7 @@ Page {
             }
         }
 
-        TextArea {
+        AppTextArea {
             id: output
 
             Layout.fillWidth: true

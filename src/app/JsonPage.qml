@@ -30,7 +30,7 @@ Page {
     contentItem: ColumnLayout {
         spacing: 6
 
-        TextArea {
+        AppTextArea {
             id: input
 
             Layout.fillWidth: true
@@ -46,14 +46,14 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("格式化")
                 highlighted: true
                 onClicked: root.apply(function() {
                     return Json.formatJson(input.text)
                 })
             }
-            Button {
+            AppButton {
                 text: qsTr("压缩")
                 onClicked: root.apply(function() {
                     return Json.minifyJson(input.text)
@@ -73,7 +73,7 @@ Page {
             }
         }
 
-        TextArea {
+        AppTextArea {
             id: output
 
             Layout.fillWidth: true
@@ -87,19 +87,19 @@ Page {
         }
 
         RowLayout {
-            Button {
+            AppButton {
                 text: qsTr("复制输出")
                 enabled: output.text !== ""
                 onClicked: Clipboard.copy(output.text)
                            ? Toast.show(qsTr("输出已复制"))
                            : Toast.show(qsTr("内容过大，无法复制"))
             }
-            Button {
+            AppButton {
                 text: qsTr("复制到输入")
                 enabled: output.text !== ""
                 onClicked: input.text = output.text
             }
-            Button {
+            AppButton {
                 text: qsTr("清空")
                 onClicked: {
                     input.text = ""

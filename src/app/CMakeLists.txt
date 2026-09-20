@@ -29,6 +29,15 @@ qt_add_qml_module(hash-gui
         PageHeader.qml
         HomePage.qml
         AppScrollBar.qml
+        AppButton.qml
+        AppToolButton.qml
+        AppTextField.qml
+        AppTextArea.qml
+        AppCheckBox.qml
+        AppRadioButton.qml
+        AppComboBox.qml
+        AppSpinBox.qml
+        AppProgressBar.qml
         AlgorithmChips.qml
         FileHashPage.qml
         TextHashPage.qml

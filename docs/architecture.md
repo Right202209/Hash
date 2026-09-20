@@ -28,11 +28,14 @@ src/
 │   └── textdigesttool / codectool / jsontool / timestamptool /
 │       uuidtool / radixtool / colortool / passwordtool   每工具一个小控制器
 └── app/     Qt Quick GUI（hash-gui）
-    ├── main.cpp        入口：暗色调色板、Basic 样式、单例注册、诊断日志
-    ├── Main.qml        启动器外壳（命令栏、工具网格、StackView、状态栏）
+    ├── main.cpp        入口：暗色调色板、深色 color scheme、Basic 样式、单例注册、诊断日志
+    ├── Main.qml        启动器外壳（命令栏、工具网格、StackView、状态栏、窗口调色板镜像）
     ├── Theme.qml       颜色/圆角/动画令牌单例 —— 全部自定义表面唯一取色处
     ├── Toast.qml       跨页通知通道（状态栏消费）
-    ├── AppScrollBar.qml / AlgorithmChips.qml / PageHeader.qml   共享控件
+    ├── AppScrollBar.qml / AppButton.qml / AppToolButton.qml /
+    │   AppTextField.qml / AppTextArea.qml / AppCheckBox.qml /
+    │   AppRadioButton.qml / AppComboBox.qml / AppSpinBox.qml /
+    │   AppProgressBar.qml / AlgorithmChips.qml / PageHeader.qml   共享控件
     └── *Page.qml       各工具页（懒加载）
 ```
 
@@ -71,8 +74,8 @@ src/
 
 ## 界面一致性约定
 
-- 所有自定义表面的颜色、圆角、动画时长一律取自 `Theme.qml` 令牌，禁止在页面里写裸色值；`main.cpp` 的 QPalette 与令牌保持同值镜像，驱动 Basic 样式的控件（含由 `Mid`/`Light`/`Dark` 派生的边框）。
-- 状态颜色统一走 `Theme.statusColor(status)`；共享控件（`PageHeader`、`AlgorithmChips`、`AppScrollBar`）保证各页面结构一致。
+- 所有自定义表面的颜色、圆角、动画时长一律取自 `Theme.qml` 令牌，禁止在页面里写裸色值；可交互控件统一使用共享的 `App*` 控件（自带 Theme 配色），窗口级调色板镜像（`Main.qml`）与 `main.cpp` 的 QPalette 保持同值，为 `Page`/`GroupBox` 背景与 `Label` 默认色兜底——仅依赖 QPalette 的平台传播在 Windows 上并不可靠（issue #1）。
+- 状态颜色统一走 `Theme.statusColor(status)`；共享控件（`PageHeader`、`AlgorithmChips`、`AppScrollBar`、`AppButton`、`AppTextField`、`AppTextArea`、`AppCheckBox`、`AppRadioButton`、`AppComboBox`、`AppSpinBox`、`AppProgressBar`）保证各页面结构一致。
 - 算法名称是小写注册表键（`sha256`、`crc32-ieee`）；页面展示用 `AlgorithmsModel` 的标签。
 
 ## 测试与 CI

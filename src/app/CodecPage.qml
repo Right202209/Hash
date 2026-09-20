@@ -40,7 +40,7 @@ Page {
             text: qsTr("输入")
             color: Theme.muted
         }
-        TextArea {
+        AppTextArea {
             id: input
 
             Layout.fillWidth: true
@@ -55,7 +55,7 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("编码")
                 highlighted: true
                 onClicked: root.apply(function() {
@@ -63,14 +63,14 @@ Page {
                                          : Codec.urlEncode(input.text)
                 })
             }
-            Button {
+            AppButton {
                 text: qsTr("解码")
                 onClicked: root.apply(function() {
                     return root.isBase64 ? Codec.base64Decode(input.text)
                                          : Codec.urlDecode(input.text)
                 })
             }
-            Button {
+            AppButton {
                 text: qsTr("输入 ⇄ 输出")
                 onClicked: {
                     const swap = input.text
@@ -94,7 +94,7 @@ Page {
             text: qsTr("输出")
             color: Theme.muted
         }
-        TextArea {
+        AppTextArea {
             id: output
 
             Layout.fillWidth: true
@@ -107,14 +107,14 @@ Page {
         }
 
         RowLayout {
-            Button {
+            AppButton {
                 text: qsTr("复制输出")
                 enabled: output.text !== ""
                 onClicked: Clipboard.copy(output.text)
                            ? Toast.show(qsTr("输出已复制"))
                            : Toast.show(qsTr("内容过大，无法复制"))
             }
-            Button {
+            AppButton {
                 text: qsTr("清空")
                 onClicked: {
                     input.text = ""

@@ -3,8 +3,9 @@ import QtQuick
 
 // Theme is the single source of truth for every custom surface color, radius
 // and animation duration in the toolbox. Pages must reference these tokens
-// (never hard-coded hex values) so all tools share one look; the control
-// palette in main.cpp mirrors the same values for the Basic style.
+// (never hard-coded hex values) so all tools share one look; the same values
+// are mirrored onto the ApplicationWindow palette (Main.qml) and the
+// application palette (main.cpp) for the Basic style and platform frames.
 QtObject {
     readonly property color canvas: "#081421"
     readonly property color surface: "#0E2031"

@@ -30,7 +30,7 @@ Item {
         anchors.rightMargin: 16
         spacing: 10
 
-        ToolButton {
+        AppToolButton {
             text: qsTr("←")
             font.pixelSize: 18
             onClicked: root.backRequested()

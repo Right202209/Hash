@@ -36,17 +36,17 @@ Page {
             Layout.fillWidth: true
             spacing: 14
 
-            CheckBox {
+            AppCheckBox {
                 id: upperCheck
 
                 text: qsTr("大写")
             }
-            CheckBox {
+            AppCheckBox {
                 id: bracesCheck
 
                 text: qsTr("大括号")
             }
-            CheckBox {
+            AppCheckBox {
                 id: hyphenCheck
 
                 text: qsTr("包含连字符")
@@ -59,7 +59,7 @@ Page {
                     text: qsTr("数量")
                     color: Theme.muted
                 }
-                SpinBox {
+                AppSpinBox {
                     id: countSpin
 
                     from: 1
@@ -71,7 +71,7 @@ Page {
             Item {
                 Layout.fillWidth: true
             }
-            Button {
+            AppButton {
                 text: qsTr("生成")
                 highlighted: true
                 onClicked: root.generate()
@@ -85,7 +85,7 @@ Page {
             }
         }
 
-        TextArea {
+        AppTextArea {
             id: output
 
             Layout.fillWidth: true
@@ -98,7 +98,7 @@ Page {
         }
 
         RowLayout {
-            Button {
+            AppButton {
                 text: qsTr("复制全部")
                 enabled: output.text !== ""
                 onClicked: Clipboard.copy(output.text)

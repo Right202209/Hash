@@ -76,7 +76,7 @@ Page {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    TextField {
+                    AppTextField {
                         id: stampInput
 
                         Layout.preferredWidth: 220
@@ -85,23 +85,23 @@ Page {
                         font.family: Theme.monoFamily
                         onAccepted: root.convertStamp()
                     }
-                    RadioButton {
+                    AppRadioButton {
                         id: secondsRadio
 
                         text: qsTr("秒")
                         checked: true
                     }
-                    RadioButton {
+                    AppRadioButton {
                         id: msRadio
 
                         text: qsTr("毫秒")
                     }
-                    Button {
+                    AppButton {
                         text: qsTr("转换")
                         highlighted: true
                         onClicked: root.convertStamp()
                     }
-                    Button {
+                    AppButton {
                         text: qsTr("当前时间")
                         onClicked: root.fillNow()
                     }
@@ -145,7 +145,7 @@ Page {
                             font.pixelSize: 13
                             font.family: Theme.monoFamily
                         }
-                        ToolButton {
+                        AppToolButton {
                             text: qsTr("⧉")
                             font.pixelSize: 12
                             onClicked: Clipboard.copy(modelData.value)
@@ -169,7 +169,7 @@ Page {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    TextField {
+                    AppTextField {
                         id: dateInput
 
                         Layout.preferredWidth: 260
@@ -178,7 +178,7 @@ Page {
                         font.family: Theme.monoFamily
                         onAccepted: root.convertDate()
                     }
-                    Button {
+                    AppButton {
                         text: qsTr("转换")
                         highlighted: true
                         onClicked: root.convertDate()
@@ -219,7 +219,7 @@ Page {
                             font.pixelSize: 13
                             font.family: Theme.monoFamily
                         }
-                        ToolButton {
+                        AppToolButton {
                             text: qsTr("⧉")
                             font.pixelSize: 12
                             onClicked: Clipboard.copy(modelData.value)

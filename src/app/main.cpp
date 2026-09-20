@@ -24,6 +24,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QStandardPaths>
+#include <QStyleHints>
 #include <QTextStream>
 #include <QtQml>
 
@@ -79,9 +80,12 @@ void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString
 
 // applyDarkPalette ports the widget theme to Qt Quick: the Basic style
 // renders from the application palette, so one dark palette covers every
-// control without shipping a styled QML module. The values mirror Theme.qml
-// (the single source of truth for the custom surfaces); Mid, Light and Dark
-// drive the style's derived borders so every control shares the same hairline.
+// control without shipping a styled QML module. The same values are mirrored
+// on the ApplicationWindow palette (Main.qml), which is what the QML scene
+// actually inherits on every platform: a QGuiApplication palette alone can
+// be overridden by the Windows platform theme, which left tool pages on the
+// Basic style's light defaults (issue #1). Mid, Light and Dark drive the
+// style's derived borders so every control shares the same hairline.
 void applyDarkPalette(QGuiApplication &application) {
     QPalette palette;
     palette.setColor(QPalette::Window, QColor(0x08, 0x14, 0x21));
@@ -118,6 +122,10 @@ int main(int argc, char *argv[]) {
     qInstallMessageHandler(guiMessageHandler);
     applyDarkPalette(application);
     QQuickStyle::setStyle(QStringLiteral("Basic"));
+    // Pin the color scheme so the Basic style resolves any role the mirrored
+    // palettes leave unset from its dark defaults, and Windows renders the
+    // title bar dark instead of blending a light frame into the shell.
+    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
     QFont font(QStringLiteral("Microsoft YaHei UI"));
     font.setPixelSize(15);
     application.setFont(font);

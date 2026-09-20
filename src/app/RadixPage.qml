@@ -37,7 +37,7 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            TextField {
+            AppTextField {
                 id: valueInput
 
                 Layout.preferredWidth: 260
@@ -50,7 +50,7 @@ Page {
                 text: qsTr("从")
                 color: Theme.muted
             }
-            ComboBox {
+            AppComboBox {
                 id: fromCombo
 
                 model: [2, 8, 10, 16, 32, 36]
@@ -65,7 +65,7 @@ Page {
                 text: qsTr("到")
                 color: Theme.muted
             }
-            ComboBox {
+            AppComboBox {
                 id: toCombo
 
                 model: [2, 8, 10, 16, 32, 36]
@@ -76,7 +76,7 @@ Page {
                     top: 36
                 }
             }
-            Button {
+            AppButton {
                 text: qsTr("转换")
                 highlighted: true
                 onClicked: root.convert()
@@ -113,7 +113,7 @@ Page {
                     font.family: Theme.monoFamily
                     elide: Text.ElideMiddle
                 }
-                ToolButton {
+                AppToolButton {
                     text: qsTr("⧉")
                     visible: root.outcome !== null
                     onClicked: Clipboard.copy(root.outcome.value)

@@ -17,6 +17,33 @@ ApplicationWindow {
     title: qsTr("Hash 工具箱")
     color: Theme.canvas
 
+    // The window palette is the mirror of the Theme tokens for controls this
+    // shell does not restyle itself (Page and GroupBox backgrounds, Label
+    // defaults, ToolTip). It is set here, inside the scene, because a
+    // QGuiApplication palette can be overridden by the platform theme on
+    // Windows; the same values live in applyDarkPalette (main.cpp).
+    palette.window: Theme.canvas
+    palette.windowText: Theme.text
+    palette.base: Theme.canvas
+    palette.alternateBase: Theme.surface
+    palette.text: Theme.text
+    palette.button: Theme.surface
+    palette.buttonText: Theme.text
+    palette.toolTipBase: Theme.surface
+    palette.toolTipText: Theme.text
+    palette.highlight: Theme.iceDeep
+    palette.highlightedText: Theme.text
+    palette.link: Theme.ice
+    palette.placeholderText: Theme.muted
+    palette.light: Theme.raised
+    palette.midlight: Theme.raised
+    palette.mid: Theme.line
+    palette.dark: Theme.canvas
+    palette.disabled.text: Theme.muted
+    palette.disabled.windowText: Theme.muted
+    palette.disabled.button: Theme.canvas
+    palette.disabled.buttonText: Theme.muted
+
     property string statusText: qsTr("就绪 · 选择一个工具开始")
 
     function openTool(toolId) {
@@ -128,23 +155,12 @@ ApplicationWindow {
                     font.pixelSize: 24
                     font.family: Theme.monoFamily
                 }
-                TextField {
+                AppTextField {
                     id: commandBar
 
                     Layout.fillWidth: true
                     placeholderText: qsTr("搜索工具，回车打开第一个结果")
-                    selectByMouse: true
                     Component.onCompleted: forceActiveFocus()
-                    background: Rectangle {
-                        radius: Theme.radius
-                        color: Theme.inset
-                        border.color: commandBar.activeFocus ? Theme.ice : Theme.line
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: Theme.fadeMs
-                            }
-                        }
-                    }
                     Keys.onReturnPressed: function(event) {
                         event.accepted = true
                         root.openFirstTool()

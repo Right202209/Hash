@@ -32,7 +32,7 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            TextField {
+            AppTextField {
                 id: valueInput
 
                 Layout.preferredWidth: 260
@@ -94,7 +94,7 @@ Page {
                         font.pixelSize: 13
                         font.family: Theme.monoFamily
                     }
-                    ToolButton {
+                    AppToolButton {
                         text: qsTr("⧉")
                         font.pixelSize: 12
                         onClicked: Clipboard.copy(modelData.value)

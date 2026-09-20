@@ -40,7 +40,7 @@ Page {
             defaults: ["sha256", "md5"]
         }
 
-        TextArea {
+        AppTextArea {
             id: input
 
             Layout.fillWidth: true
@@ -54,7 +54,7 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("计算")
                 highlighted: true
                 onClicked: root.compute()
@@ -99,7 +99,7 @@ Page {
                         font.pixelSize: 13
                         font.family: Theme.monoFamily
                     }
-                    ToolButton {
+                    AppToolButton {
                         text: qsTr("⧉")
                         font.pixelSize: 12
                         onClicked: Clipboard.copy(modelData.value)

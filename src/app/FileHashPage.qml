@@ -146,7 +146,8 @@ Page {
                             Label {
                                 text: Theme.statusText(fileRow.status)
                                 color: fileRow.status === 3 ? Theme.danger : Theme.muted
-                            }                            ToolButton {
+                            }
+                            AppToolButton {
                                 text: qsTr("✕")
                                 enabled: !HashController.busy
                                 visible: !HashController.busy
@@ -186,7 +187,7 @@ Page {
                                     font.pixelSize: 12
                                     font.family: Theme.monoFamily
                                 }
-                                ToolButton {
+                                AppToolButton {
                                     text: qsTr("⧉")
                                     font.pixelSize: 12
                                     ToolTip.visible: hovered
@@ -233,12 +234,12 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("添加文件")
                 enabled: !HashController.busy
                 onClicked: addDialog.open()
             }
-            Button {
+            AppButton {
                 text: qsTr("清空")
                 enabled: !HashController.busy && fileList.count > 0
                 onClicked: {
@@ -253,7 +254,7 @@ Page {
                 text: qsTr("%1 个文件 · 已选 %2 个算法").arg(fileList.count).arg(root.algorithmCount)
                 color: Theme.muted
             }
-            Button {
+            AppButton {
                 text: HashController.busy ? qsTr("取消") : qsTr("开始计算")
                 highlighted: !HashController.busy
                 enabled: HashController.busy || (fileList.count > 0 && root.algorithmCount > 0)
@@ -268,7 +269,7 @@ Page {
             }
         }
 
-        ProgressBar {
+        AppProgressBar {
             Layout.fillWidth: true
             from: 0
             to: 100
@@ -332,33 +333,33 @@ Page {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            AppButton {
                 text: qsTr("复制结果")
                 enabled: HashController.hasOutput
                 onClicked: Clipboard.copy(HashController.outputText)
                            ? Toast.show(qsTr("结果已复制"))
                            : Toast.show(qsTr("结果超过 16 MiB，无法复制"))
             }
-            Button {
+            AppButton {
                 text: qsTr("保存结果")
                 enabled: HashController.hasOutput
                 onClicked: saveDialog.open()
             }
-            Button {
+            AppButton {
                 text: qsTr("粘贴对比")
                 enabled: HashController.hasOutput
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("支持完整清单，或直接粘贴摘要（自动忽略 sha256: 等算法前缀）")
                 onClicked: HashController.compareClipboard(Clipboard.text())
             }
-            Button {
+            AppButton {
                 text: qsTr("清除比对")
                 visible: HashController.compare.valid || HashController.compare.error !== ""
                 onClicked: HashController.resetCompare()
             }
         }
 
-        TextArea {
+        AppTextArea {
             Layout.fillWidth: true
             Layout.fillHeight: true
             readOnly: true
