@@ -36,6 +36,7 @@ class TestFormat : public QObject {
         }
         QVERIFY2(output.contains(QStringLiteral("'=file.txt")),
                  "formula-like path was not escaped");
+        QCOMPARE(lines.at(2), QStringLiteral("ERROR\t\tmissing\tfile does not exist\t-\t-"));
     }
 
     void tsvValueEscapesFormulaAfterLeadingWhitespace() {

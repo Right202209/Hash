@@ -124,9 +124,13 @@ void writeTsv(QString *output, const QVector<Row> &rows, const FormatOptions &op
     }
     *output += columns.join(u'\t') + u'\n';
     for (const Row &item : rows) {
+        // Only user-controlled cells go through tsvValue; the fixed ERROR and
+        // "-" placeholders and generated numbers or times are emitted as is,
+        // so a placeholder never gains a spreadsheet apostrophe.
         QStringList values;
         if (!item.error.isEmpty()) {
-            values << QStringLiteral("ERROR") << QString() << item.path << item.error;
+            values << QStringLiteral("ERROR") << QString() << tsvValue(item.path)
+                   << tsvValue(item.error);
             if (options.showSize) {
                 values << QStringLiteral("-");
             }
@@ -134,16 +138,14 @@ void writeTsv(QString *output, const QVector<Row> &rows, const FormatOptions &op
                 values << QStringLiteral("-");
             }
         } else {
-            values << item.algorithm << item.digest << item.path << QString();
+            values << tsvValue(item.algorithm) << tsvValue(item.digest) << tsvValue(item.path)
+                   << QString();
             if (options.showSize) {
                 values << QString::number(item.size);
             }
             if (options.showModified) {
                 values << formatTime(item.modified, options.utc);
             }
-        }
-        for (QString &value : values) {
-            value = tsvValue(value);
         }
         *output += values.join(u'\t') + u'\n';
     }
