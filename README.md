@@ -35,8 +35,9 @@ hash.exe --format tsv --output hashes.tsv --recursive .
 | `--format text\|tsv\|json` | 输出格式（默认 text） |
 | `--output/-o <file>` | 结果原子写入指定文件 |
 | `--recursive` / `--literal` / `--fail-fast` | 目录递归 / 关闭通配符 / 首错即停 |
+| `--version` / `-h, --help` | 打印版本 / 打印用法（输出到 stdout） |
 
-Windows 下通配符由程序展开；输出按输入顺序返回，文件流式读取，不整载内存。退出码：`0` 成功，`1` 失败，`2` 用法错误，`3` 已取消（Ctrl+C）。
+Windows 下通配符由程序展开；输出按输入顺序返回，文件流式读取，不整载内存。退出码：`0` 成功（含 `--version`、`-h`），`1` 失败，`2` 用法错误，`3` 已取消（Ctrl+C）。
 
 ## GUI（工具箱）
 
