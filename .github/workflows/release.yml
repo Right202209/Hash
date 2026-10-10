@@ -12,6 +12,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify tag matches project version
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME -replace '^v', ''
+          $cmake = Get-Content CMakeLists.txt -Raw
+          $match = [regex]::Match($cmake, 'project\(Hash VERSION ([0-9][0-9.]{0,30})')
+          if (-not $match.Success) { throw "project VERSION not found in CMakeLists.txt" }
+          $version = $match.Groups[1].Value
+          if ($tag -ne $version) {
+            throw "tag $env:GITHUB_REF_NAME does not match CMake project version $version"
+          }
+          "HASH_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -24,6 +36,14 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
+      - name: Check CLI version
+        shell: pwsh
+        run: |
+          $out = (& build/Release/hash.exe -version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0) { throw "hash.exe -version exited with $LASTEXITCODE" }
+          if ($out -ne "hash $env:HASH_VERSION") { throw "unexpected version output: $out" }
       - name: Stage and deploy
         shell: pwsh
         run: |
