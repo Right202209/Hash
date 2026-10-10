@@ -54,6 +54,7 @@ src/
 - `hashFiles`（`core/batch.cpp`）以 `nextIndex` 原子计数分发文件给 `min(4, 硬件并发)` 个 `std::thread`；结果按请求顺序写回。Windows 上这些 worker 以 `THREAD_PRIORITY_BELOW_NORMAL` 运行，满载计算不抢占 UI 与其他程序。
 - 进度语义由 `ProgressTracker` 保证：互斥锁内只改状态并取快照，用户回调在锁外触发（可能并发）。文件开始时 `CurrentBytes` 归零，完成时计入 `CompletedBytes` 并归零；`CompletedBytes + CurrentBytes` 是已哈希字节数。
 - 块级进度两级节流：`hasher` 每 1 MiB 读取回调一次，`batch` 每 8 MiB 才转发给 tracker/回调（`kProgressChunkBytes`），`BatchWorker` 再按 100 ms 节流向 GUI 线程发 queued signal。三级叠加后事件循环不会被大队列冲垮，UI 以约 10 Hz 刷新。
+- 节流会丢弃快照，因此 BatchWorker 另外按路径去重，把每个文件的首次报告作为 fileStarted 信号绕过 100 ms 节流单独转发（每个文件一次）；HashController 据此把该行标为 Hashing，多 worker 并发时所有在算的文件都会显示为进行中。
 - 取消是共享的 `std::atomic<bool>`；已取消文件记为 canceled 状态并保留已完成结果。`FailFast` 时任一错误即置取消标志。
 - `hasher` 先 `Open` 再对句柄 stat（句柄是权威对象，无 `Lstat→Open` TOCTOU 窗口），跟随符号链接、拒绝非普通文件；结束后对句柄与路径各 stat 一次，结合大小/mtime 产出 `changed`，GUI 提示「已变化」。
 
