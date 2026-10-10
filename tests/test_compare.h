@@ -60,6 +60,17 @@ class TestCompare : public QObject {
         QCOMPARE(records.size(), 1);
     }
 
+    void parseQuotedPathDecodesOctalEscapes() {
+        QVector<hash_core::CompareRecord> records;
+        QString error;
+        QVERIFY2(hash_core::parseDigestText(QStringLiteral("sha256\tabc\t\"\\101\\x42.bin\"\n"),
+                                            &records, &error),
+                 qPrintable(error));
+        QCOMPARE(records.at(0).path, QStringLiteral("AB.bin"));
+        QVERIFY(!hash_core::parseDigestText(QStringLiteral("sha256\tabc\t\"\\108\"\n"),
+                                            &records, &error));
+    }
+
     void compareMissingUnexpectedMismatchAndDuplicate() {
         using hash_core::CompareRecord;
         const QVector<CompareRecord> expected = {

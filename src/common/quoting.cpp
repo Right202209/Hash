@@ -76,6 +76,22 @@ bool hexValue(const QString &text, int digits, quint32 *out) {
     return true;
 }
 
+bool octalValue(const QString &text, quint32 *out) {
+    if (text.size() < 3) {
+        return false;
+    }
+    quint32 value = 0;
+    for (int index = 0; index < 3; ++index) {
+        const char16_t code = text.at(index).unicode();
+        if (code < u'0' || code > u'7') {
+            return false;
+        }
+        value = (value << 3) | quint32(code - u'0');
+    }
+    *out = value;
+    return true;
+}
+
 } // namespace
 
 bool goUnquote(const QString &value, QString *out, QString *error) {
@@ -167,7 +183,7 @@ bool goUnquote(const QString &value, QString *out, QString *error) {
         default:
             if (escape >= u'0' && escape <= u'7') {
                 quint32 code = 0;
-                if (!hexValue(body.mid(index), 3, &code) || code > 0xFF) {
+                if (!octalValue(body.mid(index), &code) || code > 0xFF) {
                     return fail();
                 }
                 decoded += QChar(char16_t(code));
