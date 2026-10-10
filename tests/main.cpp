@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QtTest>
 
+#include "test_algorithmsmodel.h"
 #include "test_atomicfile.h"
 #include "test_batch.h"
 #include "test_codecs.h"
@@ -11,6 +12,7 @@
 #include "test_hashcontroller.h"
 #include "test_hasher.h"
 #include "test_jsontool.h"
+#include "test_options.h"
 #include "test_pathkey.h"
 #include "test_paths.h"
 #include "test_progress.h"
@@ -88,6 +90,14 @@ int main(int argc, char **argv) {
     }
     {
         TestHashController test;
+        status |= QTest::qExec(&test, argc, argv);
+    }
+    {
+        TestAlgorithmsModel test;
+        status |= QTest::qExec(&test, argc, argv);
+    }
+    {
+        TestOptions test;
         status |= QTest::qExec(&test, argc, argv);
     }
     return status == 0 ? 0 : 1;
