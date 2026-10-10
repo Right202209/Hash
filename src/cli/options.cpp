@@ -32,6 +32,8 @@ constexpr const char *kUsageFlags =
     "    \tshow file size in bytes\n"
     "  -utc\n"
     "    \tshow times in UTC\n"
+    "  -version\n"
+    "    \tprint the version and exit\n"
     "  -workers int\n"
     "    \tnumber of files processed concurrently";
 
@@ -105,6 +107,11 @@ bool parseArgs(const QStringList &args, Config *config, QString *error) {
         if (name == QStringLiteral("h") || name == QStringLiteral("help")) {
             *error = QStringLiteral("flag: help requested");
             return false;
+        }
+        if (name == QStringLiteral("version") && !hasValue) {
+            config->showVersion = true;
+            ++index;
+            continue;
         }
 
         // fetch reads the following argument for flags that need a value.

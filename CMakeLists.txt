@@ -45,6 +45,9 @@ add_library(hash_core STATIC
 )
 target_include_directories(hash_core PUBLIC src)
 target_link_libraries(hash_core PUBLIC Qt6::Core)
+# The single source of truth for the version string: the CLI's --version and
+# the GUI's application version both read HASH_VERSION.
+target_compile_definitions(hash_core PUBLIC HASH_VERSION="${PROJECT_VERSION}")
 
 # hash_tools hosts the toolbox backends: Qt object models and tool controllers
 # that the QML layer binds to. It stays QtCore-only so the tests exercise it

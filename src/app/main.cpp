@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     QGuiApplication application(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("Hash"));
     QCoreApplication::setApplicationName(QStringLiteral("hash-gui"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.1.0"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(HASH_VERSION));
     qInstallMessageHandler(guiMessageHandler);
     applyDarkPalette(application);
     QQuickStyle::setStyle(QStringLiteral("Basic"));

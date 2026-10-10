@@ -28,6 +28,7 @@ struct Config {
     bool recursive = false;
     bool literal = false;
     bool failFast = false;
+    bool showVersion = false;
     QStringList paths;
 };
 

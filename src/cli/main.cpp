@@ -58,6 +58,10 @@ int main(int argc, char *argv[]) {
         writeStream(stderr, hash_core::usageText());
         return hash_core::ExitUsage;
     }
+    if (config.showVersion) {
+        writeStream(stdout, QStringLiteral("hash " HASH_VERSION "\n"));
+        return hash_core::ExitSuccess;
+    }
 
     QStringList algorithms;
     if (!hash_core::selectAlgorithms(config, &algorithms, &error)) {
