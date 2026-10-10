@@ -17,6 +17,7 @@
 #include "test_registry.h"
 #include "test_textdigest.h"
 #include "test_timestamptool.h"
+#include "test_toolregistry.h"
 
 int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
@@ -75,6 +76,10 @@ int main(int argc, char **argv) {
     }
     {
         TestGeneratorTools test;
+        status |= QTest::qExec(&test, argc, argv);
+    }
+    {
+        TestToolRegistry test;
         status |= QTest::qExec(&test, argc, argv);
     }
     {

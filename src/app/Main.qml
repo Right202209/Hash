@@ -3,16 +3,17 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import HashTools
 
-// Launcher-style shell in the uTools mould: a command bar on top filters the
-// tool grid, Enter opens the first hit, Esc returns from a tool, and the
-// status bar mirrors transient feedback.
+// Shell: a permanent sidebar lists every tool by category, the content area
+// shows the overview or the current tool, and Ctrl+K opens the command
+// palette. Tool pages are created on first open and then kept alive, so
+// switching between tools preserves their inputs and results.
 ApplicationWindow {
     id: root
 
-    width: 980
-    height: 680
-    minimumWidth: 780
-    minimumHeight: 540
+    width: 1100
+    height: 720
+    minimumWidth: 840
+    minimumHeight: 560
     visible: true
     title: qsTr("Hash 工具箱")
     color: Theme.canvas
@@ -44,175 +45,140 @@ ApplicationWindow {
     palette.disabled.button: Theme.canvas
     palette.disabled.buttonText: Theme.muted
 
-    property string statusText: qsTr("就绪 · 选择一个工具开始")
+    // Empty means the overview is showing.
+    property string currentToolId: ""
+    property string statusText: qsTr("就绪")
 
-    function openTool(toolId) {
-        const page = pages[toolId]
-        if (page) {
-            stack.push(page)
-        }
-    }
+    // toolPages maps registry ids to their page file and the initial
+    // properties the page is created with.
+    readonly property var toolPages: [
+        { id: "filehash", url: "FileHashPage.qml", props: {} },
+        { id: "texthash", url: "TextHashPage.qml", props: {} },
+        { id: "base64", url: "CodecPage.qml", props: { mode: "base64" } },
+        { id: "url", url: "CodecPage.qml", props: { mode: "url" } },
+        { id: "json", url: "JsonPage.qml", props: {} },
+        { id: "timestamp", url: "TimestampPage.qml", props: {} },
+        { id: "uuid", url: "UuidPage.qml", props: {} },
+        { id: "radix", url: "RadixPage.qml", props: {} },
+        { id: "color", url: "ColorPage.qml", props: {} },
+        { id: "password", url: "PasswordPage.qml", props: {} }
+    ]
 
-    function openFirstTool() {
-        if (stack.depth === 1) {
-            const toolId = Tools.firstToolId()
-            if (toolId !== "") {
-                openTool(toolId)
+    function pageIndex(toolId) {
+        for (let index = 0; index < toolPages.length; ++index) {
+            if (toolPages[index].id === toolId) {
+                return index
             }
         }
+        return -1
     }
 
-    property var pages: ({
-                             "filehash": fileHashPage,
-                             "texthash": textHashPage,
-                             "base64": codecBase64Page,
-                             "url": codecUrlPage,
-                             "json": jsonPage,
-                             "timestamp": timestampPage,
-                             "uuid": uuidPage,
-                             "radix": radixPage,
-                             "color": colorPage,
-                             "password": passwordPage
-                         })
-
-    Component {
-        id: homeComponent
-        HomePage {
-            onOpenRequested: toolId => root.openTool(toolId)
+    function openTool(toolId) {
+        if (toolId === "") {
+            currentToolId = ""
+            return
         }
-    }
-    Component {
-        id: fileHashPage
-        FileHashPage {}
-    }
-    Component {
-        id: textHashPage
-        TextHashPage {}
-    }
-    Component {
-        id: codecBase64Page
-        CodecPage {
-            mode: "base64"
+        const index = pageIndex(toolId)
+        if (index < 0) {
+            return
         }
-    }
-    Component {
-        id: codecUrlPage
-        CodecPage {
-            mode: "url"
+        const loader = loaders.itemAt(index)
+        if (loader && loader.status === Loader.Null) {
+            const page = toolPages[index]
+            loader.setSource(Qt.resolvedUrl(page.url), page.props)
         }
-    }
-    Component {
-        id: jsonPage
-        JsonPage {}
-    }
-    Component {
-        id: timestampPage
-        TimestampPage {}
-    }
-    Component {
-        id: uuidPage
-        UuidPage {}
-    }
-    Component {
-        id: radixPage
-        RadixPage {}
-    }
-    Component {
-        id: colorPage
-        ColorPage {}
-    }
-    Component {
-        id: passwordPage
-        PasswordPage {}
+        currentToolId = toolId
     }
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
         spacing: 0
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 52
-            color: Theme.surface
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: 1
-                color: Theme.line
-            }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 14
-                anchors.rightMargin: 16
-                spacing: 10
-
-                Label {
-                    text: "#"
-                    color: Theme.ice
-                    font.pixelSize: 24
-                    font.family: Theme.monoFamily
-                }
-                AppTextField {
-                    id: commandBar
-
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("搜索工具，回车打开第一个结果")
-                    Component.onCompleted: forceActiveFocus()
-                    Keys.onReturnPressed: function(event) {
-                        event.accepted = true
-                        root.openFirstTool()
-                    }
-                    Keys.onEnterPressed: function(event) {
-                        event.accepted = true
-                        root.openFirstTool()
-                    }
-                }
-                Label {
-                    text: stack.depth > 1 ? qsTr("Esc 返回")
-                                          : qsTr("%1 个工具").arg(Tools.rowCount())
-                    color: Theme.muted
-                }
-            }
+        Sidebar {
+            Layout.fillHeight: true
+            Layout.preferredWidth: Theme.sidebarWidth
+            currentToolId: root.currentToolId
+            onToolSelected: toolId => root.openTool(toolId)
+            onHomeRequested: root.openTool("")
+            onSearchRequested: commandPalette.open()
         }
 
-        StackView {
-            id: stack
-
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            initialItem: homeComponent
-        }
+            spacing: 0
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 26
-            color: Theme.surface
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 1
-                color: Theme.line
+                HomePage {
+                    anchors.fill: parent
+                    visible: root.currentToolId === ""
+                    onOpenRequested: toolId => root.openTool(toolId)
+                }
+
+                Repeater {
+                    id: loaders
+
+                    model: root.toolPages
+
+                    delegate: Loader {
+                        required property var modelData
+
+                        anchors.fill: parent
+                        visible: root.currentToolId === modelData.id
+                    }
+                }
             }
 
-            Label {
-                anchors.left: parent.left
-                anchors.leftMargin: 14
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.statusText
-                color: Theme.muted
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 28
+                color: Theme.surface
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: 1
+                    color: Theme.line
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    spacing: 12
+
+                    Rectangle {
+                        Layout.preferredWidth: 6
+                        Layout.preferredHeight: 6
+                        radius: 3
+                        color: statusTimer.running ? Theme.ice : Theme.ok
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        text: root.statusText
+                        color: Theme.muted
+                        font.pixelSize: 12
+                        elide: Text.ElideRight
+                    }
+                    Label {
+                        text: root.currentToolId === "" ? qsTr("Ctrl+K 快速切换")
+                                                        : qsTr("Ctrl+K 快速切换 · Esc 返回概览")
+                        color: Theme.muted
+                        font.pixelSize: 12
+                    }
+                }
             }
         }
     }
 
-    Binding {
-        target: Tools
-        property: "filter"
-        value: commandBar.text
+    CommandPalette {
+        id: commandPalette
+
+        onToolChosen: toolId => root.openTool(toolId)
     }
 
     Connections {
@@ -232,8 +198,13 @@ ApplicationWindow {
     }
 
     Shortcut {
+        sequences: ["Ctrl+K", "Ctrl+P"]
+        onActivated: commandPalette.opened ? commandPalette.close() : commandPalette.open()
+    }
+
+    Shortcut {
         sequence: "Esc"
-        enabled: stack.depth > 1
-        onActivated: stack.pop()
+        enabled: root.currentToolId !== "" && !commandPalette.opened
+        onActivated: root.openTool("")
     }
 }

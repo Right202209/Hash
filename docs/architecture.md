@@ -24,12 +24,18 @@ src/
 │   ├── hashcontroller.*  批量会话控制器（队列、进度、输出、比对），QML 单例
 │   ├── batchworker.h     专用线程上的 hashFiles 调用者，100 ms 进度节流
 │   ├── hashfilemodel.*   文件队列模型（状态、摘要、错误）
-│   ├── algorithmsmodel.* / toolregistrymodel.*  算法与工具目录模型
+│   ├── algorithmsmodel.* / toolregistrymodel.*  算法与工具目录模型（工具带 category 分组；
+│   │                   同一类目的两个实例分别注册为 Tools（侧栏/概览，不过滤）与 ToolSearch（命令面板独立过滤））
 │   └── textdigesttool / codectool / jsontool / timestamptool /
 │       uuidtool / radixtool / colortool / passwordtool   每工具一个小控制器
 └── app/     Qt Quick GUI（hash-gui）
     ├── main.cpp        入口：暗色调色板、深色 color scheme、Basic 样式、单例注册、诊断日志
-    ├── Main.qml        启动器外壳（命令栏、工具网格、StackView、状态栏、窗口调色板镜像）
+    ├── Main.qml        外壳：左侧 Sidebar + 右侧内容区（概览或当前工具）、状态栏、窗口调色板镜像；
+    │                   工具页由 Repeater+Loader 首次打开时创建并一直保活，切换工具不丢输入/结果；
+    │                   Ctrl+K / Ctrl+P 打开命令面板，Esc 返回概览
+    ├── Sidebar.qml     按 category 分组的工具导航（品牌按钮回概览、搜索入口、当前工具高亮）
+    ├── CommandPalette.qml  模态快速切换面板（实时过滤 ToolSearch、↑↓/Enter/Esc）
+    ├── HomePage.qml    概览页：全部工具卡片网格
     ├── Theme.qml       颜色/圆角/动画令牌单例 —— 全部自定义表面唯一取色处
     ├── Toast.qml       跨页通知通道（状态栏消费）
     ├── AppScrollBar.qml / AppButton.qml / AppToolButton.qml /

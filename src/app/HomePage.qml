@@ -3,112 +3,151 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import HashTools
 
+// HomePage is the overview shown when no tool is selected: every tool as a
+// card with its category, opened with one click.
 Item {
     id: root
 
     signal openRequested(string toolId)
 
-    Label {
-        anchors.centerIn: parent
-        visible: grid.count === 0
-        text: qsTr("没有匹配的工具")
-        color: Theme.muted
-    }
-
-    GridView {
-        id: grid
-
+    ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        clip: true
-        model: Tools
-        boundsBehavior: Flickable.StopAtBounds
-        cellWidth: Math.max(240, Math.floor(width / Math.max(1, Math.floor(width / 320))))
-        cellHeight: 96
-        ScrollBar.vertical: AppScrollBar {}
+        anchors.margins: Theme.pagePadding + 8
+        spacing: 18
 
-        delegate: Item {
-            id: card
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 4
 
-            width: grid.cellWidth - 12
-            height: grid.cellHeight - 12
+            Label {
+                text: qsTr("所有工具")
+                color: Theme.text
+                font.pixelSize: 24
+                font.bold: true
+            }
+            Label {
+                text: qsTr("从左侧选择，或按 Ctrl+K 快速搜索 · 共 %1 个工具").arg(grid.count)
+                color: Theme.muted
+                font.pixelSize: 13
+            }
+        }
 
-            required property string toolId
-            required property string name
-            required property string description
-            required property string icon
+        GridView {
+            id: grid
 
-            Rectangle {
-                anchors.fill: parent
-                radius: Theme.cardRadius
-                color: cardHover.pressed ? Theme.inset
-                                         : cardHover.containsMouse ? Theme.raised : Theme.surface
-                border.color: cardHover.containsMouse ? Theme.ice : Theme.line
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            model: Tools
+            boundsBehavior: Flickable.StopAtBounds
+            cellWidth: Math.floor(width / Math.max(1, Math.floor(width / 300)))
+            cellHeight: 116
+            ScrollBar.vertical: AppScrollBar {}
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.fadeMs
-                    }
-                }
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: Theme.fadeMs
-                    }
-                }
+            delegate: Item {
+                id: card
 
-                RowLayout {
+                required property string toolId
+                required property string name
+                required property string description
+                required property string icon
+                required property string category
+
+                width: grid.cellWidth - 12
+                height: grid.cellHeight - 12
+
+                Rectangle {
                     anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 12
+                    radius: Theme.cardRadius
+                    color: cardHover.pressed ? Theme.inset
+                                             : cardHover.containsMouse ? Theme.raised : Theme.surface
+                    border.color: cardHover.containsMouse ? Theme.ice : Theme.line
 
-                    Rectangle {
-                        Layout.preferredWidth: 40
-                        Layout.preferredHeight: 40
-                        radius: Theme.radius
-                        color: Theme.inset
-                        border.color: cardHover.containsMouse ? Theme.ice : Theme.line
-
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: Theme.fadeMs
-                            }
-                        }
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: card.icon
-                            color: Theme.ice
-                            font.pixelSize: 18
-                            font.family: Theme.monoFamily
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.fadeMs
                         }
                     }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.fadeMs
+                        }
+                    }
 
-                        Label {
-                            text: card.name
-                            color: Theme.text
-                            font.pixelSize: 15
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        spacing: 8
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.preferredWidth: 36
+                                Layout.preferredHeight: 36
+                                radius: Theme.radius
+                                color: cardHover.containsMouse ? Theme.iceDeep : Theme.inset
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.fadeMs
+                                    }
+                                }
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: card.icon
+                                    color: Theme.ice
+                                    font.pixelSize: 16
+                                    font.family: Theme.monoFamily
+                                }
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: card.name
+                                color: Theme.text
+                                font.pixelSize: 15
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                            Rectangle {
+                                Layout.preferredWidth: categoryLabel.implicitWidth + 12
+                                Layout.preferredHeight: 20
+                                radius: 4
+                                color: Theme.inset
+
+                                Label {
+                                    id: categoryLabel
+
+                                    anchors.centerIn: parent
+                                    text: card.category
+                                    color: Theme.muted
+                                    font.pixelSize: 11
+                                }
+                            }
                         }
                         Label {
                             Layout.fillWidth: true
+                            Layout.fillHeight: true
                             text: card.description
                             color: Theme.muted
                             font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 2
                             elide: Text.ElideRight
                         }
                     }
                 }
-            }
 
-            MouseArea {
-                id: cardHover
+                MouseArea {
+                    id: cardHover
 
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openRequested(card.toolId)
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openRequested(card.toolId)
+                }
             }
         }
     }

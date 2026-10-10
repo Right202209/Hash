@@ -88,27 +88,27 @@ void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString
 // style's derived borders so every control shares the same hairline.
 void applyDarkPalette(QGuiApplication &application) {
     QPalette palette;
-    palette.setColor(QPalette::Window, QColor(0x08, 0x14, 0x21));
-    palette.setColor(QPalette::WindowText, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::Base, QColor(0x1A, 0x2B, 0x38));
-    palette.setColor(QPalette::AlternateBase, QColor(0x0E, 0x20, 0x31));
-    palette.setColor(QPalette::Text, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::Button, QColor(0x0E, 0x20, 0x31));
-    palette.setColor(QPalette::ButtonText, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::ToolTipBase, QColor(0x0E, 0x20, 0x31));
-    palette.setColor(QPalette::ToolTipText, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::Highlight, QColor(0x1C, 0x5B, 0x7E));
-    palette.setColor(QPalette::HighlightedText, QColor(0xE8, 0xF5, 0xFB));
-    palette.setColor(QPalette::Link, QColor(0x76, 0xD8, 0xF7));
-    palette.setColor(QPalette::Light, QColor(0x14, 0x2E, 0x43));
-    palette.setColor(QPalette::Midlight, QColor(0x11, 0x29, 0x3D));
-    palette.setColor(QPalette::Mid, QColor(0x28, 0x48, 0x5D));
-    palette.setColor(QPalette::Dark, QColor(0x05, 0x10, 0x1B));
-    palette.setColor(QPalette::PlaceholderText, QColor(0x8E, 0xA8, 0xBB));
-    palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8E, 0xA8, 0xBB));
-    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8E, 0xA8, 0xBB));
-    palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x8E, 0xA8, 0xBB));
-    palette.setColor(QPalette::Disabled, QPalette::Button, QColor(0x08, 0x14, 0x21));
+    palette.setColor(QPalette::Window, QColor(0x0F, 0x11, 0x15));
+    palette.setColor(QPalette::WindowText, QColor(0xE6, 0xE9, 0xEF));
+    palette.setColor(QPalette::Base, QColor(0x22, 0x28, 0x36));
+    palette.setColor(QPalette::AlternateBase, QColor(0x15, 0x19, 0x22));
+    palette.setColor(QPalette::Text, QColor(0xE6, 0xE9, 0xEF));
+    palette.setColor(QPalette::Button, QColor(0x15, 0x19, 0x22));
+    palette.setColor(QPalette::ButtonText, QColor(0xE6, 0xE9, 0xEF));
+    palette.setColor(QPalette::ToolTipBase, QColor(0x15, 0x19, 0x22));
+    palette.setColor(QPalette::ToolTipText, QColor(0xE6, 0xE9, 0xEF));
+    palette.setColor(QPalette::Highlight, QColor(0x2E, 0x47, 0x80));
+    palette.setColor(QPalette::HighlightedText, QColor(0xE6, 0xE9, 0xEF));
+    palette.setColor(QPalette::Link, QColor(0x7A, 0xA2, 0xFF));
+    palette.setColor(QPalette::Light, QColor(0x1C, 0x21, 0x2C));
+    palette.setColor(QPalette::Midlight, QColor(0x19, 0x1E, 0x28));
+    palette.setColor(QPalette::Mid, QColor(0x2A, 0x31, 0x40));
+    palette.setColor(QPalette::Dark, QColor(0x0A, 0x0C, 0x10));
+    palette.setColor(QPalette::PlaceholderText, QColor(0x8A, 0x93, 0xA3));
+    palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x8A, 0x93, 0xA3));
+    palette.setColor(QPalette::Disabled, QPalette::Text, QColor(0x8A, 0x93, 0xA3));
+    palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(0x8A, 0x93, 0xA3));
+    palette.setColor(QPalette::Disabled, QPalette::Button, QColor(0x0F, 0x11, 0x15));
     application.setPalette(palette);
 }
 
@@ -136,6 +136,9 @@ int main(int argc, char *argv[]) {
     hash_core::HashController hashController;
     hash_core::AlgorithmsModel algorithmsModel;
     hash_core::ToolRegistryModel toolRegistryModel;
+    // A second, independently filtered registry backs the Ctrl+K palette so
+    // typing a query never hides entries in the always-visible sidebar.
+    hash_core::ToolRegistryModel toolSearchModel;
     hash_core::TextDigestTool textDigestTool;
     hash_core::CodecTool codecTool;
     hash_core::JsonTool jsonTool;
@@ -147,6 +150,7 @@ int main(int argc, char *argv[]) {
     ClipboardService clipboardService;
 
     qmlRegisterSingletonInstance("HashTools", 1, 0, "Tools", &toolRegistryModel);
+    qmlRegisterSingletonInstance("HashTools", 1, 0, "ToolSearch", &toolSearchModel);
     qmlRegisterSingletonInstance("HashTools", 1, 0, "Algorithms", &algorithmsModel);
     qmlRegisterSingletonInstance("HashTools", 1, 0, "HashController", &hashController);
     qmlRegisterSingletonInstance("HashTools", 1, 0, "TextDigest", &textDigestTool);

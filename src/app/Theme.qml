@@ -1,29 +1,36 @@
 pragma Singleton
 import QtQuick
 
-// Theme is the single source of truth for every custom surface color, radius
-// and animation duration in the toolbox. Pages must reference these tokens
-// (never hard-coded hex values) so all tools share one look; the same values
-// are mirrored onto the ApplicationWindow palette (Main.qml) and the
+// Theme is the single source of truth for every custom surface color, radius,
+// size and animation duration in the toolbox. Pages must reference these
+// tokens (never hard-coded hex values) so all tools share one look; the same
+// colors are mirrored onto the ApplicationWindow palette (Main.qml) and the
 // application palette (main.cpp) for the Basic style and platform frames.
 QtObject {
-    readonly property color canvas: "#081421"
-    readonly property color surface: "#0E2031"
-    readonly property color raised: "#142E43"
-    readonly property color inset: "#1A2B38"
-    readonly property color line: "#28485D"
-    readonly property color text: "#E8F5FB"
-    readonly property color muted: "#8EA8BB"
-    readonly property color ice: "#76D8F7"
-    // Deep accent used by the mirrored control palette (main.cpp Highlight);
-    // kept here so both ends of the mirror are documented in one place.
-    readonly property color iceDeep: "#1C5B7E"
-    readonly property color ok: "#7DF781"
-    readonly property color danger: "#F76D76"
+    // Surfaces, darkest to lightest: window canvas, sidebar/cards, hover,
+    // input wells. line is the shared hairline.
+    readonly property color canvas: "#0F1115"
+    readonly property color surface: "#151922"
+    readonly property color raised: "#1C212C"
+    readonly property color inset: "#222836"
+    readonly property color line: "#2A3140"
+    readonly property color text: "#E6E9EF"
+    readonly property color muted: "#8A93A3"
+    // ice is the accent (historic name kept so every page keeps compiling);
+    // iceDeep is the selection/highlight fill used by the mirrored palette
+    // (main.cpp Highlight) and the active sidebar row.
+    readonly property color ice: "#7AA2FF"
+    readonly property color iceDeep: "#2E4780"
+    readonly property color ok: "#5FD38D"
+    readonly property color danger: "#F2777A"
 
-    // One radius for small elements (fields, chips, dots) and one for cards.
-    readonly property int radius: 6
-    readonly property int cardRadius: 10
+    // One radius for small elements (fields, chips, rows) and one for cards.
+    readonly property int radius: 8
+    readonly property int cardRadius: 12
+
+    // Shell metrics.
+    readonly property int sidebarWidth: 224
+    readonly property int pagePadding: 20
 
     // Standard micro-animation for hover/press color changes.
     readonly property int fadeMs: 120

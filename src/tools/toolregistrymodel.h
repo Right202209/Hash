@@ -6,13 +6,16 @@
 
 namespace hash_core {
 
-// ToolSpec describes one toolbox entry shown on the home grid.
+// ToolSpec describes one toolbox entry shown in the sidebar, the overview
+// grid and the command palette. category groups entries into sidebar sections;
+// tools of one category are listed contiguously.
 struct ToolSpec {
     QString id;
     QString name;
     QString description;
     QString icon;
     QString keywords;
+    QString category;
 };
 
 // ToolRegistryModel lists every toolbox tool with a live case-insensitive
@@ -29,6 +32,7 @@ class ToolRegistryModel : public QAbstractListModel {
         DescriptionRole,
         IconRole,
         KeywordsRole,
+        CategoryRole,
     };
 
     explicit ToolRegistryModel(QObject *parent = nullptr);

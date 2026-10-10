@@ -107,6 +107,7 @@ add_executable(hash_tests
     tests/test_generatortools.h
     tests/test_colortool.h
     tests/test_hashcontroller.h
+    tests/test_toolregistry.h
 )
 target_link_libraries(hash_tests PRIVATE hash_tools Qt6::Test)
 add_test(NAME hash_tests COMMAND hash_tests)

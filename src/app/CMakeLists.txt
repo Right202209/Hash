@@ -27,6 +27,8 @@ qt_add_qml_module(hash-gui
         Theme.qml
         Toast.qml
         PageHeader.qml
+        Sidebar.qml
+        CommandPalette.qml
         HomePage.qml
         AppScrollBar.qml
         AppButton.qml
