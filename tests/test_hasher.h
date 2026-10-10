@@ -9,6 +9,10 @@
 
 #include <memory>
 
+#ifndef Q_OS_WIN
+#include <sys/stat.h>
+#endif
+
 class TestHasher : public QObject {
     Q_OBJECT
 
@@ -134,6 +138,22 @@ class TestHasher : public QObject {
             tempPath(QStringLiteral("does-not-exist.bin")), {QStringLiteral("sha256")});
         QVERIFY(!outcome.error.isEmpty());
         QVERIFY2(outcome.error.startsWith(QStringLiteral("open ")), qPrintable(outcome.error));
+    }
+
+    // Opening a FIFO without a writer must not block; it is rejected as a
+    // non-regular file instead.
+    void fifoIsRejectedWithoutBlocking() {
+#ifdef Q_OS_WIN
+        QSKIP("FIFOs are POSIX-only");
+#else
+        const QString path = tempPath(QStringLiteral("input.fifo"));
+        if (::mkfifo(QFile::encodeName(path).constData(), 0600) != 0) {
+            QSKIP("mkfifo is unavailable");
+        }
+        const hash_core::HashOutcome outcome =
+            hash_core::hashFile(path, {QStringLiteral("sha256")});
+        QVERIFY2(!outcome.error.isEmpty(), "a FIFO must not be hashed");
+#endif
     }
 
     void invalidRequestIsRejected() {

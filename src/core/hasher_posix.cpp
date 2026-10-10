@@ -44,12 +44,20 @@ void PlatformFile::close() {
 
 bool PlatformFile::open(const QString &path, QString *error) {
     const QByteArray encoded = path.toLocal8Bit();
-    const int descriptor = ::open(encoded.constData(), O_RDONLY | O_CLOEXEC);
+    // O_NONBLOCK keeps open() from waiting for a writer on a FIFO or a
+    // device; the caller rejects non-regular files after fstat, before any
+    // read, so blocking mode is restored immediately.
+    const int descriptor =
+        ::open(encoded.constData(), O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NONBLOCK);
     if (descriptor < 0) {
         if (error) {
             *error = systemErrorMessage(errno);
         }
         return false;
+    }
+    const int flags = ::fcntl(descriptor, F_GETFL);
+    if (flags >= 0) {
+        ::fcntl(descriptor, F_SETFL, flags & ~O_NONBLOCK);
     }
     m_descriptor = descriptor;
     return true;
