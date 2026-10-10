@@ -105,13 +105,8 @@ bool parseArgs(const QStringList &args, Config *config, QString *error) {
             hasValue = true;
         }
         if (name == QStringLiteral("h") || name == QStringLiteral("help")) {
-            *error = QStringLiteral("flag: help requested");
-            return false;
-        }
-        if (name == QStringLiteral("version") && !hasValue) {
-            config->showVersion = true;
-            ++index;
-            continue;
+            config->showHelp = true;
+            return true;
         }
 
         // fetch reads the following argument for flags that need a value.
@@ -188,6 +183,10 @@ bool parseArgs(const QStringList &args, Config *config, QString *error) {
             }
         } else if (name == QStringLiteral("fail-fast")) {
             if (!assignBool(&config->failFast, name)) {
+                return false;
+            }
+        } else if (name == QStringLiteral("version")) {
+            if (!assignBool(&config->showVersion, name)) {
                 return false;
             }
         } else {

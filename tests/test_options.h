@@ -85,10 +85,6 @@ class TestOptions : public QObject {
         QVERIFY(!parse({QStringLiteral("-bogus")}, &unknown, &error));
         QCOMPARE(error, QStringLiteral("flag provided but not defined: -bogus"));
 
-        hash_core::Config help;
-        QVERIFY(!parse({QStringLiteral("-h")}, &help, &error));
-        QCOMPARE(error, QStringLiteral("flag: help requested"));
-
         hash_core::Config negative;
         QVERIFY(!parse({QStringLiteral("-workers=-1")}, &negative, &error));
         QCOMPARE(error, QStringLiteral("workers cannot be negative"));
@@ -102,6 +98,16 @@ class TestOptions : public QObject {
         QVERIFY(error.startsWith(QString::fromLatin1(hash_core::kUnsupportedFormatMessage)));
     }
 
+    void helpFlagSucceeds() {
+        for (const QString &flag : {QStringLiteral("-h"), QStringLiteral("--help")}) {
+            hash_core::Config config;
+            QString error;
+            QVERIFY(parse({flag, QStringLiteral("-bogus")}, &config, &error));
+            QVERIFY(config.showHelp);
+            QVERIFY(error.isEmpty());
+        }
+    }
+
     void formatIsCaseInsensitive() {
         hash_core::Config config;
         QString error;
@@ -113,6 +119,18 @@ class TestOptions : public QObject {
         QString error;
         QVERIFY(parse({QStringLiteral("-version")}, &config, &error));
         QVERIFY(config.showVersion);
+
+        hash_core::Config explicitTrue;
+        QVERIFY(parse({QStringLiteral("--version=true")}, &explicitTrue, &error));
+        QVERIFY(explicitTrue.showVersion);
+
+        hash_core::Config explicitFalse;
+        QVERIFY(parse({QStringLiteral("-version=false")}, &explicitFalse, &error));
+        QVERIFY(!explicitFalse.showVersion);
+
+        hash_core::Config badValue;
+        QVERIFY(!parse({QStringLiteral("-version=maybe")}, &badValue, &error));
+        QVERIFY(error.startsWith(QStringLiteral("invalid boolean value")));
         QVERIFY(hash_core::usageText().contains(QStringLiteral("-version")));
         QVERIFY(!QStringLiteral(HASH_VERSION).isEmpty());
     }

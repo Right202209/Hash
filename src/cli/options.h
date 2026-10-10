@@ -29,6 +29,9 @@ struct Config {
     bool literal = false;
     bool failFast = false;
     bool showVersion = false;
+    // showHelp is set by -h/-help; the caller prints usageText() to stdout
+    // and exits successfully, matching Go's flag package.
+    bool showHelp = false;
     QStringList paths;
 };
 

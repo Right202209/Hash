@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
         writeStream(stderr, hash_core::usageText());
         return hash_core::ExitUsage;
     }
+    if (config.showHelp) {
+        writeStream(stdout, hash_core::usageText());
+        return hash_core::ExitSuccess;
+    }
     if (config.showVersion) {
         writeStream(stdout, QStringLiteral("hash " HASH_VERSION "\n"));
         return hash_core::ExitSuccess;
