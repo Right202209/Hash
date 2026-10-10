@@ -23,15 +23,18 @@ void writeStream(std::FILE *stream, const QString &text) {
     std::fwrite(encoded.constData(), 1, size_t(encoded.size()), stream);
 }
 
-int exitCodeForResults(const QVector<hash_core::FileResult> &results, bool failFast) {
+// exitCodeForResults follows the documented contract: 3 only when the user
+// interrupted the run (Ctrl+C or SIGTERM), otherwise 1 when any file failed.
+// Files that fail-fast skipped count as failures, not cancellations, and the
+// answer never depends on which file happened to come first.
+int exitCodeForResults(const QVector<hash_core::FileResult> &results, bool interrupted) {
+    if (interrupted) {
+        return hash_core::ExitCanceled;
+    }
     for (const hash_core::FileResult &result : results) {
-        if (result.error.isEmpty()) {
-            continue;
+        if (!result.error.isEmpty()) {
+            return hash_core::ExitFailure;
         }
-        if (failFast || result.canceled) {
-            return hash_core::ExitCanceled;
-        }
-        return hash_core::ExitFailure;
     }
     return hash_core::ExitSuccess;
 }
@@ -119,5 +122,5 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    return exitCodeForResults(results, config.failFast);
+    return exitCodeForResults(results, gCanceled.load(std::memory_order_relaxed));
 }
