@@ -6,6 +6,7 @@
 
 #include <QCryptographicHash>
 #include <QFile>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QUrl>
 #include <QtTest>
@@ -14,6 +15,37 @@ class TestHashController : public QObject {
     Q_OBJECT
 
   private slots:
+    void marksEveryStartedFileAsHashing() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QList<QUrl> urls;
+        for (int index = 0; index < 6; ++index) {
+            const QByteArray name = QByteArray("file") + QByteArray::number(index) + ".txt";
+            urls.append(QUrl::fromLocalFile(writeFile(dir, name.constData(), "payload")));
+        }
+
+        hash_core::HashController controller;
+        QCOMPARE(controller.addFiles(urls).value("added").toInt(), 6);
+        auto *model = qobject_cast<hash_core::HashFileModel *>(controller.files());
+        QVERIFY(model);
+
+        QSet<int> seenHashing;
+        connect(model, &QAbstractItemModel::dataChanged, this,
+                [model, &seenHashing](const QModelIndex &first, const QModelIndex &last) {
+                    for (int row = first.row(); row <= last.row(); ++row) {
+                        const int status =
+                            model->index(row).data(hash_core::HashFileModel::StatusRole).toInt();
+                        if (status == int(hash_core::FileStatus::Hashing)) {
+                            seenHashing.insert(row);
+                        }
+                    }
+                });
+
+        controller.start({QStringLiteral("sha256")});
+        QTRY_COMPARE_WITH_TIMEOUT(controller.busy(), false, 30000);
+        QCOMPARE(seenHashing.size(), 6);
+    }
+
     void hashesQueuedFilesAndSavesOutput() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());

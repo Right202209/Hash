@@ -25,6 +25,7 @@ HashController::HashController(QObject *parent) : QObject(parent), mFiles(new Ha
     mWorker->moveToThread(mThread);
     connect(mThread, &QThread::finished, mWorker, &QObject::deleteLater);
     connect(mWorker, &BatchWorker::progressChanged, this, &HashController::onProgressChanged);
+    connect(mWorker, &BatchWorker::fileStarted, this, &HashController::onFileStarted);
     connect(mWorker, &BatchWorker::runFinished, this, &HashController::onRunFinished);
     mThread->start();
     resetCompare();
@@ -190,6 +191,13 @@ void HashController::onProgressChanged(const Progress &progress) {
         mFiles->markStatus(row, FileStatus::Hashing);
     }
     emit progressChanged();
+}
+
+void HashController::onFileStarted(const QString &path) {
+    const int row = mRowByKey.value(pathKey(path), -1);
+    if (row >= 0 && mFiles->rows().at(row).status == FileStatus::Pending) {
+        mFiles->markStatus(row, FileStatus::Hashing);
+    }
 }
 
 void HashController::onRunFinished(const QVector<FileResult> &results,

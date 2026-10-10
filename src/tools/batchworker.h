@@ -5,6 +5,7 @@
 
 #include <QElapsedTimer>
 #include <QObject>
+#include <QSet>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -36,7 +37,22 @@ class BatchWorker : public QObject {
         throttle.start();
         qint64 lastEmit = -1000;
         std::mutex emitMutex;
+        // Every file start is forwarded once, outside the throttle, so each
+        // file a concurrent worker picks up shows as hashing even when its
+        // snapshots are dropped. That is one event per file, not per chunk.
+        QSet<QString> started;
         options.progress = [&](const Progress &progress) {
+            bool firstReport = false;
+            {
+                const std::lock_guard<std::mutex> lock(emitMutex);
+                if (!progress.currentPath.isEmpty() && !started.contains(progress.currentPath)) {
+                    started.insert(progress.currentPath);
+                    firstReport = true;
+                }
+            }
+            if (firstReport) {
+                emit fileStarted(progress.currentPath);
+            }
             {
                 const std::lock_guard<std::mutex> lock(emitMutex);
                 const qint64 elapsed = throttle.elapsed();
@@ -54,6 +70,7 @@ class BatchWorker : public QObject {
 
   signals:
     void progressChanged(const Progress &progress);
+    void fileStarted(const QString &path);
     void runFinished(const QVector<FileResult> &results, const QStringList &algorithms);
 
   private:

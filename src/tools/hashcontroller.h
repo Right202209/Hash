@@ -72,6 +72,7 @@ class HashController : public QObject {
 
   private:
     void onProgressChanged(const Progress &progress);
+    void onFileStarted(const QString &path);
     void onRunFinished(const QVector<FileResult> &results, const QStringList &algorithms);
     void setBusy(bool busy);
     void setCompare(const QVariantMap &compare);
