@@ -17,7 +17,10 @@ jobs:
           host: linux
           cache: true
       - name: Install tooling
-        run: sudo apt-get update && sudo apt-get install -y clang-format libgl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
+      - name: Install pinned clang-format
+        # Pin the formatter so a runner image update cannot change the style.
+        run: pipx install clang-format==18.1.8 && clang-format --version
       - name: Format check
         run: clang-format --dry-run -Werror $(git ls-files '*.cpp' '*.h')
       - name: Configure
@@ -61,3 +64,15 @@ jobs:
         run: cmake --build build --config Release --parallel
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
+      - name: Smoke run GUI headless
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $env:QT_QUICK_BACKEND = 'software'
+          $p = Start-Process -FilePath build/Release/hash-gui.exe -PassThru
+          Start-Sleep -Seconds 10
+          $log = Join-Path $env:LOCALAPPDATA 'Hash/hash-gui/gui.log'
+          if (Test-Path $log) { Get-Content $log }
+          if ($p.HasExited) { throw "hash-gui exited early with code $($p.ExitCode)" }
+          # Still running after 10 s: the window launched successfully.
+          Stop-Process -Id $p.Id -Force
