@@ -20,9 +20,10 @@ void fillStat(const struct ::stat &st, FileStat *out) {
     out->regular = S_ISREG(st.st_mode);
     out->size = qint64(st.st_size);
 #if defined(__APPLE__)
-    out->mtimeMs = qint64(st.st_mtimespec.tv_sec) * 1000 + qint64(st.st_mtimespec.tv_nsec) / 1000;
+    out->mtimeMs =
+        qint64(st.st_mtimespec.tv_sec) * 1000 + qint64(st.st_mtimespec.tv_nsec) / 1000000;
 #else
-    out->mtimeMs = qint64(st.st_mtim.tv_sec) * 1000 + qint64(st.st_mtim.tv_nsec) / 1000;
+    out->mtimeMs = qint64(st.st_mtim.tv_sec) * 1000 + qint64(st.st_mtim.tv_nsec) / 1000000;
 #endif
     out->deviceId = quint64(st.st_dev);
     out->fileId = quint64(st.st_ino);

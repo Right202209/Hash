@@ -2,6 +2,7 @@
 
 #include "core/hasher.h"
 
+#include <QDateTime>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -75,6 +76,20 @@ class TestHasher : public QObject {
         for (int index = 0; index < requested.size(); ++index) {
             QCOMPARE(outcome.result.digests.at(index).algorithm, requested.at(index));
         }
+    }
+
+    void statPreservesModificationTimeMilliseconds() {
+        const QString path = writeFile(QByteArray("timestamp"));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadWrite));
+        const QDateTime expected = QDateTime::fromMSecsSinceEpoch(1700000000123);
+        QVERIFY(file.setFileTime(expected, QFileDevice::FileModificationTime));
+        file.close();
+
+        hash_core::FileStat stat;
+        QString error;
+        QVERIFY2(hash_core::statPath(path, &stat, &error), qPrintable(error));
+        QCOMPARE(stat.mtimeMs, expected.toMSecsSinceEpoch());
     }
 
     void largeInputAndBufferBoundaries() {
