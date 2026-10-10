@@ -38,8 +38,10 @@ quint64 fileTimeToMs(const FILETIME &time) {
 void fillInfo(const BY_HANDLE_FILE_INFORMATION &info, FileStat *out) {
     const DWORD attributes = info.dwFileAttributes;
     out->valid = true;
-    out->regular = (attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE |
-                                  FILE_ATTRIBUTE_REPARSE_POINT)) == 0;
+    // The handle already follows symbolic links, so a reparse point left on
+    // the opened file (OneDrive placeholders, deduplicated files) still marks
+    // ordinary file content.
+    out->regular = (attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE)) == 0;
     out->size = (qint64(info.nFileSizeHigh) << 32) | qint64(info.nFileSizeLow);
     out->mtimeMs = qint64(fileTimeToMs(info.ftLastWriteTime));
     out->deviceId = quint64(info.dwVolumeSerialNumber);
