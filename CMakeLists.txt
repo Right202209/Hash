@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick QuickControls2 Test)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Quick QuickControls2 Test)
 qt_standard_project_setup()
 
 # Link-time optimization shrinks the release binaries a little and lets the

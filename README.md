@@ -80,7 +80,7 @@ Windows 下通配符由程序展开；输出按输入顺序返回，文件流式
 
 ## 构建
 
-需要 CMake 3.21+ 与 Qt 6.5+（Core、Quick、QuickControls2、Test），Windows 上使用 MSVC：
+需要 CMake 3.21+ 与 Qt 6.8+（Core、Quick、QuickControls2、Test），Windows 上使用 MSVC：
 
 ```text
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
