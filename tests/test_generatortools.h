@@ -60,6 +60,20 @@ class TestGeneratorTools : public QObject {
                  QStringLiteral("-10"));
     }
 
+    void radixHandlesFullUnsignedRange() {
+        hash_core::RadixTool tool;
+        const QVariantMap outcome = tool.convert(QStringLiteral("FFFFFFFFFFFFFFFF"), 16, 10);
+        QCOMPARE(outcome.value("ok").toBool(), true);
+        QCOMPARE(outcome.value("value").toString(), QStringLiteral("18446744073709551615"));
+        QCOMPARE(outcome.value("decimal").toString(), QStringLiteral("18446744073709551615"));
+        QCOMPARE(tool.convert(QStringLiteral("+ff"), 16, 10).value("value").toString(),
+                 QStringLiteral("255"));
+        QCOMPARE(tool.convert(QStringLiteral("-0"), 10, 16).value("value").toString(),
+                 QStringLiteral("0"));
+        QCOMPARE(tool.convert(QStringLiteral("--1"), 10, 16).value("ok").toBool(), false);
+        QCOMPARE(tool.convert(QStringLiteral("-"), 10, 16).value("ok").toBool(), false);
+    }
+
     void radixRejectsBadInputAndBases() {
         hash_core::RadixTool tool;
         QCOMPARE(tool.convert(QStringLiteral("zz"), 16, 10).value("ok").toBool(), false);
