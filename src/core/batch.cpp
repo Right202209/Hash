@@ -60,7 +60,11 @@ QVector<FileResult> hashFiles(const QVector<FileRequest> &requests, const BatchO
         const int ideal = QThread::idealThreadCount();
         workers = qMin(4, ideal > 0 ? ideal : 1);
     }
-    workers = int(qMin<qint64>(workers, requests.size()));
+    // Hashing is I/O bound: beyond a few dozen threads extra workers only add
+    // stack memory and seek contention, and an unbounded -workers value could
+    // exhaust thread resources on large inputs.
+    constexpr int kMaxWorkers = 64;
+    workers = int(qMin<qint64>(qMin(workers, kMaxWorkers), requests.size()));
 
     qint64 totalBytes = 0;
     QVector<qint64> fileSizes(requests.size(), 0);

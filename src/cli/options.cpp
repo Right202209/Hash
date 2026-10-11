@@ -35,7 +35,7 @@ constexpr const char *kUsageFlags =
     "  -version\n"
     "    \tprint the version and exit\n"
     "  -workers int\n"
-    "    \tnumber of files processed concurrently";
+    "    \tnumber of files processed concurrently (max 64)";
 
 // splitAlgorithmList normalizes a comma-separated --algorithm value the way
 // the previous Go implementation did: each part is trimmed and lower-cased.

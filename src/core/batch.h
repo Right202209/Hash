@@ -7,7 +7,7 @@
 namespace hash_core {
 
 // BatchOptions configures hashFiles. workers defaults to
-// min(4, ideal thread count) and progress, when set, may be called
+// min(4, ideal thread count), is capped at 64, and progress, when set, may be called
 // concurrently. cancel is polled between files and between reads; setting it
 // stops the batch.
 struct BatchOptions {
