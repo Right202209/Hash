@@ -84,14 +84,21 @@ QString writeAtomicFile(const QString &path, const QStringList &inputs, const QB
                         QString::number(QRandomGenerator::global()->generate(), 16);
         temporary.setFileName(temporaryPath);
         created = temporary.open(QIODevice::WriteOnly | QIODevice::NewOnly);
+        // Only a name collision is worth another attempt; a missing
+        // directory or a permission error fails the same way every time.
+        if (!created && !QFileInfo::exists(temporaryPath)) {
+            break;
+        }
     }
     if (!created) {
         return QStringLiteral("create temporary output: open ") + goQuote(temporaryPath) +
-               QStringLiteral(": file exists");
+               QStringLiteral(": ") + temporary.errorString();
     }
 
     if (temporary.write(content) != content.size()) {
-        error = QStringLiteral("write temporary output: short write");
+        error = QStringLiteral("write temporary output: ") +
+                (temporary.error() != QFileDevice::NoError ? temporary.errorString()
+                                                           : QStringLiteral("short write"));
         temporary.close();
         temporary.remove();
         return error;
