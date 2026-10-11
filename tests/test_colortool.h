@@ -50,6 +50,14 @@ class TestColorTool : public QObject {
         QCOMPARE(outcome.value("hex").toString(), QStringLiteral("#008000"));
     }
 
+    void wrapsHueThatRoundsToFullCircle() {
+        hash_core::ColorTool tool;
+        // The hue is just under 360 degrees, so it rounds to 0 rather than 360.
+        const QVariantMap outcome = tool.convert(QStringLiteral("rgb(255, 0, 1)"));
+        QCOMPARE(outcome.value("ok").toBool(), true);
+        QCOMPARE(outcome.value("hsl").toString(), QStringLiteral("hsl(0, 100%, 50%)"));
+    }
+
     void scalesPercentRgbChannels() {
         hash_core::ColorTool tool;
         const QVariantMap outcome = tool.convert(QStringLiteral("rgb(100%, 0%, 50%)"));

@@ -214,7 +214,8 @@ void rgbToHsl(const Rgba &color, int *hue, int *saturation, int *lightness) {
         }
         h /= 6.0;
     }
-    *hue = int(h * 360.0 + 0.5);
+    // Hues just below 360 round up to 360, which is the same angle as 0.
+    *hue = int(h * 360.0 + 0.5) % 360;
     *saturation = int(s * 100.0 + 0.5);
     *lightness = int(l * 100.0 + 0.5);
 }
