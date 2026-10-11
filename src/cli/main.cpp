@@ -18,9 +18,20 @@ namespace {
 
 std::atomic<bool> gCanceled{false};
 
-void writeStream(std::FILE *stream, const QString &text) {
+bool writeStream(std::FILE *stream, const QString &text) {
     const QByteArray encoded = text.toUtf8();
-    std::fwrite(encoded.constData(), 1, size_t(encoded.size()), stream);
+    const size_t size = size_t(encoded.size());
+    return std::fwrite(encoded.constData(), 1, size, stream) == size && std::fflush(stream) == 0;
+}
+
+// writeOutput sends results or help text to stdout. A failed write (a closed
+// pipe, a full disk) is reported so the exit code never claims success.
+bool writeOutput(const QString &text) {
+    if (writeStream(stdout, text)) {
+        return true;
+    }
+    writeStream(stderr, QStringLiteral("write output: standard output failed\n"));
+    return false;
 }
 
 // exitCodeForResults follows the documented contract: 3 only when the user
@@ -62,11 +73,15 @@ int main(int argc, char *argv[]) {
         return hash_core::ExitUsage;
     }
     if (config.showHelp) {
-        writeStream(stdout, hash_core::usageText());
+        if (!writeOutput(hash_core::usageText())) {
+            return hash_core::ExitFailure;
+        }
         return hash_core::ExitSuccess;
     }
     if (config.showVersion) {
-        writeStream(stdout, QStringLiteral("hash " HASH_VERSION "\n"));
+        if (!writeOutput(QStringLiteral("hash " HASH_VERSION "\n"))) {
+            return hash_core::ExitFailure;
+        }
         return hash_core::ExitSuccess;
     }
 
@@ -118,7 +133,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (config.output.isEmpty()) {
-        writeStream(stdout, output);
+        if (!writeOutput(output)) {
+            return hash_core::ExitFailure;
+        }
     } else if (interrupted) {
         // The results are incomplete; keep whatever the output file held before.
         writeStream(stderr, QStringLiteral("interrupted: ") + config.output +
