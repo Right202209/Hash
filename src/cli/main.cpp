@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
     options.failFast = config.failFast;
     options.canceled = []() { return gCanceled.load(std::memory_order_relaxed); };
     const QVector<hash_core::FileResult> results = hash_core::hashFiles(requests, options);
+    const bool interrupted = gCanceled.load(std::memory_order_relaxed);
 
     QString output;
     if (!hash_core::writeResults(results, algorithms,
@@ -118,6 +119,10 @@ int main(int argc, char *argv[]) {
 
     if (config.output.isEmpty()) {
         writeStream(stdout, output);
+    } else if (interrupted) {
+        // The results are incomplete; keep whatever the output file held before.
+        writeStream(stderr, QStringLiteral("interrupted: ") + config.output +
+                            QStringLiteral(" left unchanged\n"));
     } else {
         error = hash_core::writeAtomicFile(config.output, paths, output.toUtf8());
         if (!error.isEmpty()) {
@@ -126,5 +131,5 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    return exitCodeForResults(results, gCanceled.load(std::memory_order_relaxed));
+    return exitCodeForResults(results, interrupted);
 }

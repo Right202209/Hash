@@ -33,7 +33,7 @@ hash.exe --format tsv --output hashes.tsv --recursive .
 | `--size` / `--modified` / `--utc` | 输出文件大小 / 修改时间 / UTC 时间 |
 | `--workers <n>` | 并发 worker 数（默认 `min(4, 硬件并发)`） |
 | `--format text\|tsv\|json` | 输出格式（默认 text） |
-| `--output/-o <file>` | 结果原子写入指定文件 |
+| `--output/-o <file>` | 结果原子写入指定文件；被 Ctrl+C 中断时不写入，原文件保持不变 |
 | `--recursive` / `--literal` / `--fail-fast` | 目录递归 / 关闭通配符 / 首错即停 |
 | `--version` / `-h, --help` | 打印版本 / 打印用法（输出到 stdout） |
 
