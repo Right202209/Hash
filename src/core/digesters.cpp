@@ -303,7 +303,9 @@ class Sha512Digester final : public Digester {
     QByteArray digest() override {
         quint64 bitLength = m_byteCount << 3;
         quint64 bitLengthHigh = m_byteCount >> 61;
-        quint8 finalBlock[128];
+        // 112..127 buffered bytes leave no room for the 16-byte length, so the
+        // padding spills into a second block.
+        quint8 finalBlock[256];
         size_t buffered = m_bufferLength;
         std::copy(m_buffer.begin(), m_buffer.begin() + buffered, finalBlock);
         finalBlock[buffered++] = 0x80;

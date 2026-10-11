@@ -134,6 +134,38 @@ class TestRegistry : public QObject {
         }
     }
 
+    void sha512FamilyPaddingBoundaries() {
+        // 112..127 leftover bytes force a second padding block; the other lengths
+        // sit on either side of that boundary.
+        struct Vector {
+            const char *algorithm;
+            int length;
+            const char *digest;
+        };
+        const QVector<Vector> vectors = {
+            {"sha512-224", 111, "3ebe1b48e8c66acb9ae014db95b4bec93de7e9572bff41cf566bd7d0"},
+            {"sha512-224", 112, "79b41fef2a0439d2705724a67615f7bcbcd2bf5664a7774b80818eb6"},
+            {"sha512-224", 127, "65aec5ddd181bb86e1921d493a0667492cb8dbc2b560ec061ed2c492"},
+            {"sha512-224", 128, "261b94bcba554264b3b738e9e09e7dc68ac8e0b4c8517fe9bb7c3617"},
+            {"sha512-224", 239, "f0d8b2a6b6d937a8232af97907d0e8ab8b7a5d5f0b0b0c9ec2f4d8b0"},
+            {"sha512-224", 240, "ba51883293bb167a405d908b8d439d5a1a2d68bba8682ef816a09039"},
+            {"sha512-256", 111, "0239e429f98d0ed61ee8e2a7c30afe98c1c3a80ce5dff62a107e9c538f7632ce"},
+            {"sha512-256", 112, "9216b5303edb66504570bee90e48ea5beaa5e9fe9f760bbd3e0460559fc005f6"},
+            {"sha512-256", 127, "2fe3b2a6ee7e12f6fe4ba82166541ad9b4ed882c493581cbe300d68f3757b778"},
+            {"sha512-256", 128, "b88f97e274f9c1d49f181c8cbd01a9c74930ad055a46ac4499a1d601f1c80bf2"},
+            {"sha512-256", 239, "78d0a1b37aaad84c89fff13cbe3cd3d1025bcdb648268f9102b7e7032bea7d2a"},
+            {"sha512-256", 240, "d48a4d53397b38ab4e771d781c98ac6b86712dff2a664cfd1f27c7ca40f8ce37"},
+        };
+        for (const Vector &vector : vectors) {
+            hash_core::AlgorithmSpec spec;
+            QVERIFY(hash_core::lookupAlgorithm(QString::fromLatin1(vector.algorithm), &spec));
+            const QByteArray input(vector.length, 'a');
+            const std::unique_ptr<hash_core::Digester> digester = spec.create();
+            digester->update(input.constData(), input.size());
+            QCOMPARE(digester->digest(), QByteArray(vector.digest));
+        }
+    }
+
     void lookupUnknownAlgorithm() {
         QVERIFY(!hash_core::lookupAlgorithm(QStringLiteral("sha3-256")));
     }
