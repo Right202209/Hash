@@ -26,6 +26,7 @@ HashController::HashController(QObject *parent) : QObject(parent), mFiles(new Ha
     connect(mThread, &QThread::finished, mWorker, &QObject::deleteLater);
     connect(mWorker, &BatchWorker::progressChanged, this, &HashController::onProgressChanged);
     connect(mWorker, &BatchWorker::fileStarted, this, &HashController::onFileStarted);
+    connect(mWorker, &BatchWorker::fileFinished, this, &HashController::onFileFinished);
     connect(mWorker, &BatchWorker::runFinished, this, &HashController::onRunFinished);
     mThread->start();
     resetCompare();
@@ -189,11 +190,24 @@ void HashController::compareClipboard(const QString &text) {
 void HashController::onProgressChanged(const Progress &progress) {
     mProgress = progressPercent(progress);
     mCurrentFile = progress.currentPath;
+    // Only a pending row moves to hashing: a throttled snapshot can arrive
+    // after its file already finished and must not undo the final status.
     const int row = mRowByKey.value(pathKey(progress.currentPath), -1);
-    if (row >= 0) {
+    if (row >= 0 && mFiles->rows().at(row).status == FileStatus::Pending) {
         mFiles->markStatus(row, FileStatus::Hashing);
     }
     emit progressChanged();
+}
+
+// onFileFinished shows each file's outcome as soon as it is known. Requests
+// are queued in row order, so the request index is the row.
+void HashController::onFileFinished(int index, bool failed, bool canceled) {
+    if (index < 0 || index >= mFiles->rows().size()) {
+        return;
+    }
+    const FileStatus status =
+        canceled ? FileStatus::Canceled : (failed ? FileStatus::Error : FileStatus::Done);
+    mFiles->markStatus(index, status);
 }
 
 void HashController::onFileStarted(const QString &path) {

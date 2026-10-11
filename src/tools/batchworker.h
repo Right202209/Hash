@@ -64,6 +64,12 @@ class BatchWorker : public QObject {
             emit progressChanged(progress);
         };
 
+        // Each finished file is forwarded unthrottled (one event per file) so
+        // its row leaves the hashing state without waiting for the whole run.
+        options.fileFinished = [this](int index, const FileResult &result) {
+            emit fileFinished(index, !result.error.isEmpty(), result.canceled);
+        };
+
         const QVector<FileResult> results = hashFiles(requests, options);
         emit runFinished(results, algorithms);
     }
@@ -71,6 +77,7 @@ class BatchWorker : public QObject {
   signals:
     void progressChanged(const Progress &progress);
     void fileStarted(const QString &path);
+    void fileFinished(int index, bool failed, bool canceled);
     void runFinished(const QVector<FileResult> &results, const QStringList &algorithms);
 
   private:

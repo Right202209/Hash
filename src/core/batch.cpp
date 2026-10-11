@@ -102,6 +102,9 @@ QVector<FileResult> hashFiles(const QVector<FileRequest> &requests, const BatchO
                 result.request = request;
                 result.error = QStringLiteral("context canceled");
                 result.canceled = true;
+                if (options.fileFinished) {
+                    options.fileFinished(index, result);
+                }
                 continue;
             }
             emitProgress(options.progress,
@@ -132,6 +135,9 @@ QVector<FileResult> hashFiles(const QVector<FileRequest> &requests, const BatchO
             result.result = outcome.result;
             result.error = outcome.error;
             result.canceled = outcome.canceled;
+            if (options.fileFinished) {
+                options.fileFinished(index, result);
+            }
             emitProgress(options.progress, tracker.update([&outcome](Progress &progress) {
                 progress.completedFiles += 1;
                 progress.completedBytes += outcome.result.bytesRead;

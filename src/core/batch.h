@@ -15,6 +15,9 @@ struct BatchOptions {
     int workers = 0;
     std::function<void(const Progress &)> progress;
     std::function<bool()> canceled;
+    // fileFinished, when set, is called once per request as soon as its result
+    // is final, with the request index. It may be called concurrently.
+    std::function<void(int, const FileResult &)> fileFinished;
     bool failFast = false;
 };
 
