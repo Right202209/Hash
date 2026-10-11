@@ -337,20 +337,27 @@ CompareSummary compareRecords(const QVector<CompareRecord> &expected,
         }
         return indexed;
     };
-    auto values = [](const QVector<CompareRecord> &records) {
+    auto values = [](const QVector<CompareRecord> &records, bool looseOnly) {
         QSet<QString> digests;
         for (const CompareRecord &record : records) {
+            if (looseOnly && !record.loose) {
+                continue;
+            }
             digests.insert(record.digest.trimmed().toLower());
         }
         return digests;
+    };
+    auto contains = [](const QSet<QString> &digests, const CompareRecord &record) {
+        return digests.contains(record.digest.trimmed().toLower());
     };
 
     int expectedDuplicates = 0;
     int actualDuplicates = 0;
     const QHash<QString, QString> expectedMap = index(expected, &expectedDuplicates);
     const QHash<QString, QString> actualMap = index(actual, &actualDuplicates);
-    const QSet<QString> expectedValues = values(expected);
-    const QSet<QString> actualValues = values(actual);
+    const QSet<QString> expectedValues = values(expected, false);
+    const QSet<QString> actualValues = values(actual, false);
+    const QSet<QString> actualLooseValues = values(actual, true);
 
     // A bare-digest paste verifies by value: when the actual side has no full
     // records at all, expected records must not be counted as missing just
@@ -385,12 +392,13 @@ CompareSummary compareRecords(const QVector<CompareRecord> &expected,
         }
     }
     // Loose records verify by digest value alone: one match or mismatch per
-    // pasted digest, without touching the keyed counters.
+    // pasted digest, without touching the keyed counters. A pair of equal
+    // loose digests on both sides is counted once, from the actual side.
     for (const CompareRecord &record : expected) {
-        if (!record.loose) {
+        if (!record.loose || contains(actualLooseValues, record)) {
             continue;
         }
-        if (actualValues.contains(record.digest.trimmed().toLower())) {
+        if (contains(actualValues, record)) {
             summary.matches += 1;
         } else {
             summary.mismatches += 1;
@@ -398,7 +406,7 @@ CompareSummary compareRecords(const QVector<CompareRecord> &expected,
     }
     for (const CompareRecord &record : actual) {
         if (record.loose) {
-            if (expectedValues.contains(record.digest.trimmed().toLower())) {
+            if (contains(expectedValues, record)) {
                 summary.matches += 1;
             } else {
                 summary.mismatches += 1;

@@ -188,6 +188,16 @@ class TestCompare : public QObject {
         QVERIFY(!summary.exact);
     }
 
+    void looseDigestOnBothSidesCountsOnce() {
+        const QString digest = QStringLiteral("d41d8cd98f00b204e9800998ecf8427e");
+        const QVector<hash_core::CompareRecord> expected = {{QString(), digest, QString(), true}};
+        const QVector<hash_core::CompareRecord> actual = {{QString(), digest, QString(), true}};
+        const hash_core::CompareSummary summary = hash_core::compareRecords(expected, actual);
+        QCOMPARE(summary.matches, 1);
+        QCOMPARE(summary.mismatches, 0);
+        QVERIFY(summary.exact);
+    }
+
     void parseDigestStripsPrefixInsideTsvDigestField() {
         QVector<hash_core::CompareRecord> records;
         QString error;

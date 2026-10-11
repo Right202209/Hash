@@ -48,7 +48,8 @@ bool parseDigestText(const QString &text, QVector<CompareRecord> *records, QStri
 // counts matches, mismatches, missing, unexpected and duplicate records.
 // Loose records carry no path or algorithm context, so they verify by digest
 // value alone: each one counts as a match when any digest on the other side
-// is equal, and as a mismatch otherwise. They never produce missing,
+// is equal, and as a mismatch otherwise; an equal loose digest present on
+// both sides counts once. They never produce missing,
 // unexpected or duplicate counts, and when the actual side is made up entirely
 // of loose records (a bare-digest verification paste), expected records are
 // not counted as missing either.
