@@ -12,6 +12,10 @@
 namespace hash_core {
 namespace {
 
+// ReadFile takes a DWORD length; larger requests are split so a buffer of 4 GiB
+// or more is never truncated to a short or zero-length read.
+constexpr qint64 kMaxReadChunk = qint64(1) << 30;
+
 QString systemErrorMessage(DWORD code) {
     LPWSTR buffer = nullptr;
     DWORD size = ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
@@ -90,12 +94,18 @@ bool PlatformFile::stat(FileStat *out, QString *error) {
         return false;
     }
     fillInfo(info, out);
+    // Pipes, consoles and character devices carry no directory or device
+    // attribute; only a disk file counts as regular content.
+    if (out->regular && ::GetFileType(static_cast<HANDLE>(m_handle)) != FILE_TYPE_DISK) {
+        out->regular = false;
+    }
     return true;
 }
 
 qint64 PlatformFile::read(char *buffer, qint64 maxSize, QString *error) {
     DWORD bytesRead = 0;
-    if (!::ReadFile(static_cast<HANDLE>(m_handle), buffer, DWORD(maxSize), &bytesRead, nullptr)) {
+    const DWORD request = DWORD(qBound<qint64>(0, maxSize, kMaxReadChunk));
+    if (!::ReadFile(static_cast<HANDLE>(m_handle), buffer, request, &bytesRead, nullptr)) {
         const DWORD code = ::GetLastError();
         if (code == ERROR_HANDLE_EOF || code == ERROR_BROKEN_PIPE) {
             return 0;
