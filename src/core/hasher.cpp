@@ -66,13 +66,11 @@ HashOutcome hashFileWithOptions(const QString &path, const QStringList &algorith
     // the CLI's path expansion; non-regular targets are rejected.
     PlatformFile file;
     if (!file.open(path, &error)) {
-        return HashOutcome{Result{}, QStringLiteral("open ") + goQuote(path) + ": " + error,
-                           false};
+        return HashOutcome{Result{}, QStringLiteral("open ") + goQuote(path) + ": " + error, false};
     }
     FileStat before;
     if (!file.stat(&before, &error)) {
-        return HashOutcome{Result{}, QStringLiteral("stat ") + goQuote(path) + ": " + error,
-                           false};
+        return HashOutcome{Result{}, QStringLiteral("stat ") + goQuote(path) + ": " + error, false};
     }
     if (!before.regular) {
         return HashOutcome{Result{},

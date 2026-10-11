@@ -104,8 +104,8 @@ QString writeAtomicFile(const QString &path, const QStringList &inputs, const QB
         return error;
     }
     if (const int code = syncToDisk(temporary); code != 0) {
-        error = QStringLiteral("sync temporary output: ") +
-                QString::fromLocal8Bit(std::strerror(code));
+        error =
+            QStringLiteral("sync temporary output: ") + QString::fromLocal8Bit(std::strerror(code));
         temporary.close();
         temporary.remove();
         return error;

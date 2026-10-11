@@ -75,8 +75,7 @@ class TestColorTool : public QObject {
         const QVariantMap half = tool.convert(QStringLiteral("rgba(0, 0, 0, 50%)"));
         QCOMPARE(half.value("ok").toBool(), true);
         QCOMPARE(half.value("alpha").toInt(), 128);
-        QCOMPARE(tool.convert(QStringLiteral("rgba(0, 0, 0, 128)")).value("ok").toBool(),
-                 false);
+        QCOMPARE(tool.convert(QStringLiteral("rgba(0, 0, 0, 128)")).value("ok").toBool(), false);
     }
 
     void rejectsUnknownNotation() {

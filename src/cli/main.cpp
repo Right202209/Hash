@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     } else if (interrupted) {
         // The results are incomplete; keep whatever the output file held before.
         writeStream(stderr, QStringLiteral("interrupted: ") + config.output +
-                            QStringLiteral(" left unchanged\n"));
+                                QStringLiteral(" left unchanged\n"));
     } else {
         error = hash_core::writeAtomicFile(config.output, paths, output.toUtf8());
         if (!error.isEmpty()) {

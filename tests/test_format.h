@@ -96,7 +96,9 @@ class TestFormat : public QObject {
 
     void jsonEscapesControlCharactersAsFourHexDigits() {
         hash_core::FileResult failed;
-        failed.request.path = QString::fromLatin1("a\x01" "b\x1f" "c.bin");
+        failed.request.path = QString::fromLatin1("a\x01"
+                                                  "b\x1f"
+                                                  "c.bin");
         failed.error = QStringLiteral("boom");
         QString output;
         QString error;
