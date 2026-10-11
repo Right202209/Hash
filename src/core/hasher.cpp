@@ -1,5 +1,6 @@
 #include "core/hasher.h"
 
+#include "common/quoting.h"
 #include "core/registry.h"
 
 #include <QSet>
@@ -9,38 +10,6 @@ namespace hash_core {
 namespace {
 
 constexpr qint64 kDefaultBufferSize = 1024 * 1024;
-
-QString quotePath(const QString &path) {
-    // Engine messages quote paths like the previous Go implementation did
-    // with %q.
-    QString quoted;
-    quoted += u'"';
-    for (const QChar character : path) {
-        char16_t code = character.unicode();
-        switch (code) {
-        case u'"':
-            quoted += QStringLiteral("\\\"");
-            break;
-        case u'\\':
-            quoted += QStringLiteral("\\\\");
-            break;
-        case u'\n':
-            quoted += QStringLiteral("\\n");
-            break;
-        case u'\r':
-            quoted += QStringLiteral("\\r");
-            break;
-        case u'\t':
-            quoted += QStringLiteral("\\t");
-            break;
-        default:
-            quoted += character;
-            break;
-        }
-    }
-    quoted += u'"';
-    return quoted;
-}
 
 } // namespace
 
@@ -62,13 +31,13 @@ AlgorithmError validateAlgorithms(const QStringList &algorithms, QString *messag
         }
         if (!lookupAlgorithm(name)) {
             if (message) {
-                *message = QStringLiteral("unknown algorithm ") + quotePath(name);
+                *message = QStringLiteral("unknown algorithm ") + goQuote(name);
             }
             return AlgorithmError::UnknownAlgorithm;
         }
         if (seen.contains(name)) {
             if (message) {
-                *message = QStringLiteral("duplicate algorithm ") + quotePath(name);
+                *message = QStringLiteral("duplicate algorithm ") + goQuote(name);
             }
             return AlgorithmError::DuplicateAlgorithm;
         }
@@ -97,17 +66,17 @@ HashOutcome hashFileWithOptions(const QString &path, const QStringList &algorith
     // the CLI's path expansion; non-regular targets are rejected.
     PlatformFile file;
     if (!file.open(path, &error)) {
-        return HashOutcome{Result{}, QStringLiteral("open ") + quotePath(path) + ": " + error,
+        return HashOutcome{Result{}, QStringLiteral("open ") + goQuote(path) + ": " + error,
                            false};
     }
     FileStat before;
     if (!file.stat(&before, &error)) {
-        return HashOutcome{Result{}, QStringLiteral("stat ") + quotePath(path) + ": " + error,
+        return HashOutcome{Result{}, QStringLiteral("stat ") + goQuote(path) + ": " + error,
                            false};
     }
     if (!before.regular) {
         return HashOutcome{Result{},
-                           QStringLiteral("hash input ") + quotePath(path) +
+                           QStringLiteral("hash input ") + goQuote(path) +
                                QStringLiteral(" is not a regular file"),
                            false};
     }
@@ -134,7 +103,7 @@ HashOutcome hashFileWithOptions(const QString &path, const QStringList &algorith
         }
         qint64 count = file.read(buffer.data(), bufferSize, &error);
         if (count < 0) {
-            return HashOutcome{partial(), QStringLiteral("read ") + quotePath(path) + ": " + error,
+            return HashOutcome{partial(), QStringLiteral("read ") + goQuote(path) + ": " + error,
                                false};
         }
         if (count > 0) {
@@ -154,14 +123,14 @@ HashOutcome hashFileWithOptions(const QString &path, const QStringList &algorith
     FileStat after;
     if (!file.stat(&after, &error)) {
         return HashOutcome{partial(),
-                           QStringLiteral("stat ") + quotePath(path) +
+                           QStringLiteral("stat ") + goQuote(path) +
                                QStringLiteral(" after hashing: ") + error,
                            false};
     }
     FileStat pathAfter;
     if (!statPath(path, &pathAfter, &error)) {
         return HashOutcome{partial(),
-                           QStringLiteral("stat ") + quotePath(path) +
+                           QStringLiteral("stat ") + goQuote(path) +
                                QStringLiteral(" after hashing: ") + error,
                            false};
     }
