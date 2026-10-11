@@ -134,6 +134,9 @@ void HashController::start(const QStringList &algorithms) {
     emit progressChanged();
     emit outputChanged();
 
+    // Clear before queuing so a cancel() that lands before the worker starts
+    // still stops the run.
+    mCancel->store(false, std::memory_order_relaxed);
     BatchWorker *worker = mWorker;
     QMetaObject::invokeMethod(
         worker, [worker, requests, algorithms]() { worker->run(requests, algorithms); });

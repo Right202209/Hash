@@ -23,8 +23,8 @@ class BatchWorker : public QObject {
 
   public slots:
     void run(QVector<FileRequest> requests, QStringList algorithms) {
-        mCancel->store(false, std::memory_order_relaxed);
-
+        // The controller clears the flag before queuing this run; resetting it
+        // here would swallow a cancel() issued between start() and now.
         BatchOptions options;
         options.canceled = [this]() { return mCancel->load(std::memory_order_relaxed); };
 
