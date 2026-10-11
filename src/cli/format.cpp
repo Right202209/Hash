@@ -51,7 +51,7 @@ QString jsonEscape(const QString &value) {
         default:
             if (code < 0x20) {
                 escaped +=
-                    QStringLiteral("\\u00") + QString::number(code, 16).rightJustified(4, u'0');
+                    QStringLiteral("\\u") + QString::number(code, 16).rightJustified(4, u'0');
             } else {
                 escaped += character;
             }

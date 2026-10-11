@@ -94,6 +94,21 @@ class TestFormat : public QObject {
                                         "]\n"));
     }
 
+    void jsonEscapesControlCharactersAsFourHexDigits() {
+        hash_core::FileResult failed;
+        failed.request.path = QString::fromLatin1("a\x01" "b\x1f" "c.bin");
+        failed.error = QStringLiteral("boom");
+        QString output;
+        QString error;
+        QVERIFY2(hash_core::writeResults(
+                     {failed}, {},
+                     hash_core::FormatOptions{QStringLiteral("json"), false, false, false}, &output,
+                     &error),
+                 qPrintable(error));
+        QVERIFY2(output.contains(QStringLiteral("\"path\": \"a\\u0001b\\u001fc.bin\"")),
+                 qPrintable(output));
+    }
+
     void unsupportedFormatIsRejected() {
         QString output;
         QString error;
