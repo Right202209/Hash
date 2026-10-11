@@ -104,7 +104,7 @@ Page {
                     required property int index
                     required property string path
                     required property string name
-                    required property int size
+                    required property real size
                     required property int status
                     required property bool changed
                     required property string error
