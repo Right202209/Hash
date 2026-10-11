@@ -315,6 +315,9 @@ class Sha512Digester final : public Digester {
         }
         storeBigEndian64(finalBlock + padded - 16, bitLengthHigh);
         storeBigEndian64(finalBlock + padded - 8, bitLength);
+        // Finalize on the live state, then restore it so digest() can be
+        // called again (or update() continued) without changing the result.
+        const auto savedState = m_state;
         compress(finalBlock);
         if (padded == 256) {
             compress(finalBlock + 128);
@@ -330,6 +333,7 @@ class Sha512Digester final : public Digester {
             std::copy(encoded, encoded + take, reinterpret_cast<quint8 *>(raw.data()) + offset);
             offset += take;
         }
+        m_state = savedState;
         return raw.toHex();
     }
 

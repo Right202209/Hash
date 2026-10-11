@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/digesters.h"
 #include "core/registry.h"
 
 #include <QHash>
@@ -13,6 +14,15 @@ class TestRegistry : public QObject {
     Q_OBJECT
 
   private slots:
+    void sha512TruncatedDigestIsStable() {
+        auto digester = hash_core::makeSha512_256();
+        digester->update("abc", 3);
+        const QByteArray first = digester->digest();
+        QCOMPARE(digester->digest(), first);
+        QCOMPARE(first,
+                 QByteArray("53048e2681941ef99b2e29b76b4c7dabe4c2d0c634fc6d46e0e2f13107e7af23"));
+    }
+
     void standardDigestVectors() {
         struct Vector {
             const char *algorithm;
