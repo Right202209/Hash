@@ -55,36 +55,65 @@ bool parseHexColor(const QString &body, Rgba *color) {
 }
 
 // splitChannels takes the text between the parentheses, drops whitespace and
-// returns the comma-separated pieces.
+// returns the comma-separated pieces. Percent signs are kept so each channel
+// parser can scale them.
 QStringList splitChannels(const QString &body) {
     QStringList parts = body.split(u',');
     for (QString &part : parts) {
         part = part.trimmed();
-        if (part.endsWith(u'%')) {
-            part.chop(1);
-        }
     }
     return parts;
 }
 
+// splitPercent strips a trailing '%' from text and reports whether it was there.
+QString splitPercent(const QString &text, bool *percent) {
+    *percent = text.endsWith(u'%');
+    return *percent ? text.chopped(1) : text;
+}
+
+// parseChannel reads an rgb() channel: an integer 0-255 or a percentage 0-100%.
 bool parseChannel(const QString &text, int *out) {
+    bool percent = false;
+    const QString number = splitPercent(text, &percent);
     bool ok = false;
-    const int value = text.toInt(&ok);
+    if (percent) {
+        const double value = number.toDouble(&ok);
+        if (!ok || value < 0.0 || value > 100.0) {
+            return false;
+        }
+        *out = int(value * 255.0 / 100.0 + 0.5);
+        return true;
+    }
+    const int value = number.toInt(&ok);
     *out = ok ? value : -1;
     return ok && value >= 0 && value <= 255;
 }
 
+// parseAlpha reads a CSS alpha value: a number 0-1 or a percentage 0-100%.
 bool parseAlpha(const QString &text, int *alpha) {
-    if (text.contains(u'.')) {
-        bool ok = false;
-        const double value = text.toDouble(&ok);
-        if (!ok || value < 0.0 || value > 1.0) {
-            return false;
-        }
-        *alpha = int(value * 255.0 + 0.5);
-        return true;
+    bool percent = false;
+    const QString number = splitPercent(text, &percent);
+    bool ok = false;
+    double value = number.toDouble(&ok);
+    if (!ok) {
+        return false;
     }
-    return parseChannel(text, alpha);
+    if (percent) {
+        value /= 100.0;
+    }
+    if (value < 0.0 || value > 1.0) {
+        return false;
+    }
+    *alpha = int(value * 255.0 + 0.5);
+    return true;
+}
+
+// parsePercentInt reads an hsl() saturation or lightness, with optional '%'.
+bool parsePercentInt(const QString &text, int *out) {
+    bool percent = false;
+    bool ok = false;
+    *out = splitPercent(text, &percent).toInt(&ok);
+    return ok && *out >= 0 && *out <= 100;
 }
 
 bool parseFunctional(const QString &input, Rgba *color) {
@@ -108,12 +137,10 @@ bool parseFunctional(const QString &input, Rgba *color) {
         if (!ok) {
             return false;
         }
-        const int saturation = parts.at(1).toInt(&ok);
-        if (!ok || saturation < 0 || saturation > 100) {
-            return false;
-        }
-        const int lightness = parts.at(2).toInt(&ok);
-        if (!ok || lightness < 0 || lightness > 100) {
+        int saturation = 0;
+        int lightness = 0;
+        if (!parsePercentInt(parts.at(1), &saturation) ||
+            !parsePercentInt(parts.at(2), &lightness)) {
             return false;
         }
         const double normalizedHue = (hue % 360 + 360) % 360 / 360.0;

@@ -50,6 +50,27 @@ class TestColorTool : public QObject {
         QCOMPARE(outcome.value("hex").toString(), QStringLiteral("#008000"));
     }
 
+    void scalesPercentRgbChannels() {
+        hash_core::ColorTool tool;
+        const QVariantMap outcome = tool.convert(QStringLiteral("rgb(100%, 0%, 50%)"));
+        QCOMPARE(outcome.value("ok").toBool(), true);
+        QCOMPARE(outcome.value("hex").toString(), QStringLiteral("#FF0080"));
+    }
+
+    void readsCssAlphaValues() {
+        hash_core::ColorTool tool;
+        // A bare 1 is fully opaque, as in CSS, not 1/255.
+        const QVariantMap opaque = tool.convert(QStringLiteral("rgba(0, 0, 0, 1)"));
+        QCOMPARE(opaque.value("ok").toBool(), true);
+        QCOMPARE(opaque.value("alpha").toInt(), 255);
+        QCOMPARE(opaque.value("rgba").toString(), QStringLiteral("rgb(0, 0, 0)"));
+        const QVariantMap half = tool.convert(QStringLiteral("rgba(0, 0, 0, 50%)"));
+        QCOMPARE(half.value("ok").toBool(), true);
+        QCOMPARE(half.value("alpha").toInt(), 128);
+        QCOMPARE(tool.convert(QStringLiteral("rgba(0, 0, 0, 128)")).value("ok").toBool(),
+                 false);
+    }
+
     void rejectsUnknownNotation() {
         hash_core::ColorTool tool;
         QCOMPARE(tool.convert(QStringLiteral("red")).value("ok").toBool(), false);
