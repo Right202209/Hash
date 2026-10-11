@@ -245,6 +245,8 @@ bool globPattern(const QString &pattern, QStringList *matches, QString *error) {
 
 // walkDir collects regular files under dir, following the previous Go
 // walk semantics: symbolic links are never followed and never collected.
+// Windows junctions and other reparse-point directories are skipped too,
+// since following them can loop forever.
 bool walkDir(const QString &dir, QStringList *files, QString *error) {
     std::error_code code;
     std::filesystem::directory_iterator iterator(
@@ -261,20 +263,27 @@ bool walkDir(const QString &dir, QStringList *files, QString *error) {
         }
         const std::filesystem::directory_entry entry = *iterator;
         std::error_code entryCode;
-        if (entry.is_symlink(entryCode)) {
-            continue;
+        // symlink_status does not follow links, so a junction (reported as
+        // file_type::junction by MSVC) never looks like a plain directory.
+        const std::filesystem::file_type type = entry.symlink_status(entryCode).type();
+        if (entryCode) {
+            *error = QString::fromStdString(entryCode.message());
+            return false;
         }
-        if (entry.is_directory(entryCode)) {
-            if (!walkDir(fromFsPath(entry.path()), files, error)) {
+        const QString path = fromFsPath(entry.path());
+        if (type == std::filesystem::file_type::directory) {
+#ifdef Q_OS_WIN
+            if (QFileInfo(path).isJunction()) {
+                continue;
+            }
+#endif
+            if (!walkDir(path, files, error)) {
                 return false;
             }
             continue;
         }
-        if (entry.is_regular_file(entryCode)) {
-            files->append(fromFsPath(entry.path()));
-        } else if (entryCode) {
-            *error = QString::fromStdString(entryCode.message());
-            return false;
+        if (type == std::filesystem::file_type::regular) {
+            files->append(path);
         }
     }
     return true;
