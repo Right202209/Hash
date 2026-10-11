@@ -58,9 +58,9 @@ ApplicationWindow {
         { id: "url", url: "CodecPage.qml", props: { mode: "url" } },
         { id: "json", url: "JsonPage.qml", props: {} },
         { id: "timestamp", url: "TimestampPage.qml", props: {} },
-        { id: "uuid", url: "UuidPage.qml", props: {} },
         { id: "radix", url: "RadixPage.qml", props: {} },
         { id: "color", url: "ColorPage.qml", props: {} },
+        { id: "uuid", url: "UuidPage.qml", props: {} },
         { id: "password", url: "PasswordPage.qml", props: {} }
     ]
 
