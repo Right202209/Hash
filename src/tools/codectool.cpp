@@ -20,6 +20,11 @@ QVariantMap CodecTool::base64Decode(const QString &text) {
         if (code == u' ' || code == u'\t' || code == u'\r' || code == u'\n') {
             continue;
         }
+        // Base64 is pure ASCII; char(code) would truncate e.g. U+0141 to 'A'
+        // and let non-Base64 text decode successfully.
+        if (code > 0x7F) {
+            return errorOutcome(QStringLiteral("不是有效的 Base64 输入"));
+        }
         cleaned.append(char(code));
     }
     const QByteArray::FromBase64Result result =
