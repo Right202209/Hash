@@ -56,6 +56,21 @@ bool isHexDigest(const QString &digest) {
     return true;
 }
 
+// isHexString reports whether text is non-empty and entirely hex digits. TSV
+// records carry an explicit algorithm column, so only the character set is
+// checked; loose records use the stricter isHexDigest length rules.
+bool isHexString(const QString &text) {
+    if (text.isEmpty()) {
+        return false;
+    }
+    for (const QChar character : text) {
+        if (!isHexChar(character)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // normalizeDigest cleans a pasted digest value: whitespace inside the value is
 // dropped, a leading algorithm tag such as "sha256:", "SHA-256：" or "md5 =" is
 // stripped (only when the tag looks like an algorithm name), and the rest is
@@ -280,7 +295,7 @@ bool parseDigestText(const QString &text, QVector<CompareRecord> *records, QStri
             continue;
         }
         const QString digest = normalizeDigest(fields.at(1), nullptr);
-        if (algorithm.isEmpty() || digest.isEmpty()) {
+        if (algorithm.isEmpty() || !isHexString(digest)) {
             *error = QStringLiteral("line %1 is not a digest record").arg(lineNumber);
             return false;
         }
