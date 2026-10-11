@@ -67,8 +67,8 @@ class TestCompare : public QObject {
                                             &records, &error),
                  qPrintable(error));
         QCOMPARE(records.at(0).path, QStringLiteral("AB.bin"));
-        QVERIFY(!hash_core::parseDigestText(QStringLiteral("sha256\tabc\t\"\\108\"\n"),
-                                            &records, &error));
+        QVERIFY(!hash_core::parseDigestText(QStringLiteral("sha256\tabc\t\"\\108\"\n"), &records,
+                                            &error));
     }
 
     void compareMissingUnexpectedMismatchAndDuplicate() {

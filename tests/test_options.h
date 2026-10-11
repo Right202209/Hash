@@ -36,8 +36,7 @@ class TestOptions : public QObject {
         QString error;
         QVERIFY(parse({QStringLiteral("-a"), QStringLiteral(" SHA256 , MD5"),
                        QStringLiteral("--format=json"), QStringLiteral("--workers"),
-                       QStringLiteral("4"), QStringLiteral("-o=out.txt"),
-                       QStringLiteral("file")},
+                       QStringLiteral("4"), QStringLiteral("-o=out.txt"), QStringLiteral("file")},
                       &config, &error));
         QCOMPARE(config.algorithms, QStringList({QStringLiteral("sha256"), QStringLiteral("md5")}));
         QCOMPARE(config.format, QStringLiteral("json"));
