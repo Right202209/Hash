@@ -38,6 +38,18 @@ namespace {
 // silent, while CI smoke runs need the console output. The file is reset once
 // it grows past 512 KiB, keeping the on-disk footprint negligible.
 void guiMessageHandler(QtMsgType type, const QMessageLogContext &, const QString &message) {
+    // The Qt calls below (QStandardPaths, QDir, QFile) may log themselves. A
+    // nested call on the same thread would block forever on the non-recursive
+    // mutex, so it only reaches stderr.
+    thread_local bool inHandler = false;
+    if (inHandler) {
+        std::fprintf(stderr, "%s\n", qUtf8Printable(message));
+        return;
+    }
+    inHandler = true;
+    struct ResetGuard {
+        ~ResetGuard() { inHandler = false; }
+    } resetGuard;
     static QMutex logMutex;
     QMutexLocker locker(&logMutex);
     std::fprintf(stderr, "%s\n", qUtf8Printable(message));
