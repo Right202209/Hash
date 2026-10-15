@@ -138,8 +138,7 @@ class TestFormat : public QObject {
         QString output;
         QString error;
         QVERIFY2(hash_core::writeResults(
-                     {changed, changed, stable},
-                     {QStringLiteral("md5"), QStringLiteral("sha256")},
+                     {changed, changed, stable}, {QStringLiteral("md5"), QStringLiteral("sha256")},
                      hash_core::FormatOptions{QStringLiteral("text"), false, false, false}, &output,
                      &error),
                  qPrintable(error));

@@ -185,10 +185,9 @@ class TestHashController : public QObject {
             lines.at(0).split(u'\t').at(1),
             QString::fromLatin1(
                 QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Sha256).toHex()));
-        QCOMPARE(
-            lines.at(1).split(u'\t').at(1),
-            QString::fromLatin1(
-                QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Md5).toHex()));
+        QCOMPARE(lines.at(1).split(u'\t').at(1),
+                 QString::fromLatin1(
+                     QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Md5).toHex()));
     }
 
     void rejectDirectoriesAndClear() {
