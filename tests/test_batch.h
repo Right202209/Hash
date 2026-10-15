@@ -147,9 +147,8 @@ class TestBatch : public QObject {
     void reportsEachFileImmediatelyAndExactlyOnce() {
         QVector<hash_core::FileRequest> requests;
         for (int index = 0; index < 8; ++index) {
-            const QString path =
-                writeFile(QByteArray("finished") + QByteArray::number(index) + ".bin",
-                          QByteArray("payload"));
+            const QString path = writeFile(
+                QByteArray("finished") + QByteArray::number(index) + ".bin", QByteArray("payload"));
             requests.append(hash_core::FileRequest{path, {QStringLiteral("sha256")}});
         }
 
@@ -176,9 +175,8 @@ class TestBatch : public QObject {
         QVector<hash_core::FileRequest> requests;
         requests.reserve(hash_core::kMaxWorkers + 16);
         for (int index = 0; index < hash_core::kMaxWorkers + 16; ++index) {
-            const QString path =
-                writeFile(QByteArray("wide") + QByteArray::number(index) + ".bin",
-                          QByteArray("payload"));
+            const QString path = writeFile(QByteArray("wide") + QByteArray::number(index) + ".bin",
+                                           QByteArray("payload"));
             requests.append(hash_core::FileRequest{path, {QStringLiteral("sha256")}});
         }
         hash_core::BatchOptions options;

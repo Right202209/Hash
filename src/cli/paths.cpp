@@ -170,8 +170,7 @@ QString cleanGlobPath(const QString &path) {
 bool usageError(const QString &error) {
     return error == QString::fromLatin1(kNoInputMessage) ||
            error.endsWith(QString::fromLatin1(kBadPatternMessage)) ||
-           error.endsWith(
-               QStringLiteral(" is a directory; use --recursive to include its files"));
+           error.endsWith(QStringLiteral(" is a directory; use --recursive to include its files"));
 }
 
 QString joinDirEntry(const QString &dir, const QString &name) {
