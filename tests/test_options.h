@@ -97,6 +97,15 @@ class TestOptions : public QObject {
         QVERIFY(error.startsWith(QString::fromLatin1(hash_core::kUnsupportedFormatMessage)));
     }
 
+    void acceptsWorkersAboveTheCap() {
+        // FR-CLI-4: values above the hard limit of 64 are accepted and the
+        // batch truncates them; they are not a usage error.
+        hash_core::Config config;
+        QString error;
+        QVERIFY(parse({QStringLiteral("-workers=1000"), QStringLiteral("file")}, &config, &error));
+        QCOMPARE(config.workers, 1000);
+    }
+
     void helpFlagSucceeds() {
         for (const QString &flag : {QStringLiteral("-h"), QStringLiteral("--help")}) {
             hash_core::Config config;
@@ -131,7 +140,16 @@ class TestOptions : public QObject {
         QVERIFY(!parse({QStringLiteral("-version=maybe")}, &badValue, &error));
         QVERIFY(error.startsWith(QStringLiteral("invalid boolean value")));
         QVERIFY(hash_core::usageText().contains(QStringLiteral("-version")));
+    }
+
+    void versionTextIsTheSingleVersionSource() {
+        // FR-X-4: --version prints "hash <HASH_VERSION>", built from the same
+        // macro the GUI's application version is compiled from. Drift here
+        // breaks the release pipeline, not just cosmetics.
+        const QString expected = QStringLiteral("hash ") + QString::fromLatin1(HASH_VERSION);
+        QCOMPARE(hash_core::versionText(), expected + u'\n');
         QVERIFY(!QStringLiteral(HASH_VERSION).isEmpty());
+        QVERIFY(!hash_core::versionText().startsWith(QStringLiteral("hash hash ")));
     }
 
     void selectsAllOrValidatedAlgorithms() {

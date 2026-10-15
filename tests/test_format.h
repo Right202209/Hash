@@ -120,6 +120,81 @@ class TestFormat : public QObject {
         QCOMPARE(error, QStringLiteral("unsupported output format \"yaml\""));
     }
 
+    void textEmitsWarningOnceForChangedFiles() {
+        using namespace hash_core;
+        FileResult changed;
+        changed.request.path = QStringLiteral("a.bin");
+        changed.result.path = QStringLiteral("a.bin");
+        changed.result.order = {QStringLiteral("md5"), QStringLiteral("sha256")};
+        changed.result.digests = {{QStringLiteral("md5"), QStringLiteral("aa")},
+                                  {QStringLiteral("sha256"), QStringLiteral("bb")}};
+        changed.result.changed = true;
+        FileResult stable;
+        stable.request.path = QStringLiteral("b.bin");
+        stable.result.path = QStringLiteral("b.bin");
+        stable.result.order = {QStringLiteral("sha256")};
+        stable.result.digests = {{QStringLiteral("sha256"), QStringLiteral("cc")}};
+
+        QString output;
+        QString error;
+        QVERIFY2(hash_core::writeResults(
+                     {changed, changed, stable},
+                     {QStringLiteral("md5"), QStringLiteral("sha256")},
+                     hash_core::FormatOptions{QStringLiteral("text"), false, false, false}, &output,
+                     &error),
+                 qPrintable(error));
+        // One warning per changed file, not per algorithm row.
+        QCOMPARE(output.count(QStringLiteral("WARNING: file changed while hashing: \"a.bin\"\n")),
+                 1);
+        QVERIFY(!output.contains(QStringLiteral("WARNING: file changed while hashing: \"b.bin\"")));
+        QVERIFY(output.contains(QStringLiteral("md5\taa\t")));
+        QVERIFY(output.contains(QStringLiteral("sha256\tbb\t")));
+        QVERIFY(output.contains(QStringLiteral("sha256\tcc\t\"b.bin\"")));
+    }
+
+    void jsonEmitsChangedFlagForChangedFiles() {
+        hash_core::FileResult good;
+        good.request.path = QStringLiteral("a.bin");
+        good.result.path = QStringLiteral("a.bin");
+        good.result.order = {QStringLiteral("sha256")};
+        good.result.digests = {{QStringLiteral("sha256"), QStringLiteral("aa")}};
+        good.result.changed = true;
+
+        QString output;
+        QString error;
+        QVERIFY2(hash_core::writeResults(
+                     {good}, {QStringLiteral("sha256")},
+                     hash_core::FormatOptions{QStringLiteral("json"), false, false, false}, &output,
+                     &error),
+                 qPrintable(error));
+        QCOMPARE(output, QStringLiteral("[\n"
+                                        "  {\n"
+                                        "    \"path\": \"a.bin\",\n"
+                                        "    \"changed\": true,\n"
+                                        "    \"digests\": {\n"
+                                        "      \"sha256\": \"aa\"\n"
+                                        "    }\n"
+                                        "  }\n"
+                                        "]\n"));
+    }
+
+    void jsonOmitsChangedFlagForStableFiles() {
+        hash_core::FileResult good;
+        good.request.path = QStringLiteral("a.bin");
+        good.result.path = QStringLiteral("a.bin");
+        good.result.order = {QStringLiteral("sha256")};
+        good.result.digests = {{QStringLiteral("sha256"), QStringLiteral("aa")}};
+
+        QString output;
+        QString error;
+        QVERIFY2(hash_core::writeResults(
+                     {good}, {QStringLiteral("sha256")},
+                     hash_core::FormatOptions{QStringLiteral("json"), false, false, false}, &output,
+                     &error),
+                 qPrintable(error));
+        QVERIFY(!output.contains(QStringLiteral("changed")));
+    }
+
     void parseAndSelectAlgorithms() {
         hash_core::Config config;
         QString error;

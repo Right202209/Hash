@@ -6,6 +6,7 @@
 
 #include <QCryptographicHash>
 #include <QFile>
+#include <QFileInfo>
 #include <QSet>
 #include <QTemporaryDir>
 #include <QUrl>
@@ -123,6 +124,71 @@ class TestHashController : public QObject {
         const QVariantMap repeat =
             controller.addFiles({QUrl::fromLocalFile(first), QUrl::fromLocalFile(second)});
         QCOMPARE(repeat.value("added").toInt(), 0);
+    }
+
+    void outputTextIsCliTextFormat() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        // The GUI listing must be byte-for-byte what `hash -size -modified`
+        // prints, so it round-trips through the clipboard and parses back
+        // (FR-X-3, FR-FHP-9). saveOutput normalizes CRLF, so compare the
+        // newline-normalized form.
+        const QString path = writeFile(dir, "roundtrip.bin", "hello");
+        const QString digest = QString::fromLatin1(
+            QCryptographicHash::hash(QByteArray("hello"), QCryptographicHash::Sha256).toHex());
+
+        hash_core::HashController controller;
+        QCOMPARE(controller.addFiles({QUrl::fromLocalFile(path)}).value("added").toInt(), 1);
+        controller.start({QStringLiteral("sha256")});
+        QTRY_COMPARE_WITH_TIMEOUT(controller.busy(), false, 30000);
+
+        const QString output =
+            QString(controller.outputText()).replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+        const QString expected = QStringLiteral("sha256\t%1\t%2\tsize=5\tmodified=%3\n")
+                                     .arg(digest, hash_core::goQuote(path),
+                                          QFileInfo(path).lastModified().toString(Qt::ISODate));
+        QCOMPARE(output, expected);
+
+        // saveOutput writes that same listing, not a separately formatted one.
+        const QString target = dir.filePath("gui.txt");
+        QCOMPARE(controller.saveOutput(QUrl::fromLocalFile(target)), QString());
+        QFile saved(target);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        QCOMPARE(QString::fromUtf8(saved.readAll()), output);
+        saved.close();
+
+        // The exported listing feeds the compare pipeline unchanged.
+        QVector<hash_core::CompareRecord> records;
+        QString error;
+        QVERIFY2(hash_core::parseDigestText(output, &records, &error), qPrintable(error));
+        QCOMPARE(records.size(), 1);
+        QCOMPARE(records.at(0).digest, digest);
+    }
+
+    void exportsCliTextForMultipleAlgorithms() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = writeFile(dir, "multi.bin", "abc");
+
+        hash_core::HashController controller;
+        QCOMPARE(controller.addFiles({QUrl::fromLocalFile(path)}).value("added").toInt(), 1);
+        // Request order is preserved in the listing, matching the CLI which
+        // writes one line per algorithm in request order (FR-FMT-1).
+        controller.start({QStringLiteral("sha256"), QStringLiteral("md5")});
+        QTRY_COMPARE_WITH_TIMEOUT(controller.busy(), false, 30000);
+
+        const QStringList lines = controller.outputText().trimmed().split(u'\n');
+        QCOMPARE(lines.size(), 2);
+        QVERIFY(lines.at(0).startsWith(QStringLiteral("sha256\t")));
+        QVERIFY(lines.at(1).startsWith(QStringLiteral("md5\t")));
+        QCOMPARE(
+            lines.at(0).split(u'\t').at(1),
+            QString::fromLatin1(
+                QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Sha256).toHex()));
+        QCOMPARE(
+            lines.at(1).split(u'\t').at(1),
+            QString::fromLatin1(
+                QCryptographicHash::hash(QByteArray("abc"), QCryptographicHash::Md5).toHex()));
     }
 
     void rejectDirectoriesAndClear() {

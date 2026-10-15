@@ -4,7 +4,8 @@ import QtQuick.Layouts
 import HashTools
 
 // HomePage is the overview shown when no tool is selected: every tool as a
-// card with its category, opened with one click.
+// card with its category, opened with one click or with Enter/Space once a
+// card has keyboard focus.
 Item {
     id: root
 
@@ -12,23 +13,45 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Theme.pagePadding + 8
-        spacing: 18
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
+        anchors.topMargin: Theme.pagePadding
+        spacing: Theme.space3
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Theme.space1
 
             Label {
                 text: qsTr("所有工具")
                 color: Theme.text
-                font.pixelSize: 24
+                font.pixelSize: Theme.fontDisplay
                 font.bold: true
             }
-            Label {
-                text: qsTr("从左侧选择，或按 Ctrl+K 快速搜索 · 共 %1 个工具").arg(grid.count)
-                color: Theme.muted
-                font.pixelSize: 13
+            RowLayout {
+                Layout.fillWidth: true
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("按 Ctrl+K 快速搜索 · 共 %1 个工具").arg(Tools.count)
+                    color: Theme.muted
+                    font.pixelSize: Theme.fontSmall
+                }
+                RowLayout {
+                    spacing: Theme.space1
+
+                    AppKbd {
+                        text: "Ctrl"
+                    }
+                    AppKbd {
+                        text: "K"
+                    }
+                    Label {
+                        text: qsTr("快速搜索")
+                        color: Theme.muted
+                        font.pixelSize: Theme.fontSmall
+                    }
+                }
             }
         }
 
@@ -40,9 +63,21 @@ Item {
             clip: true
             model: Tools
             boundsBehavior: Flickable.StopAtBounds
+            activeFocusOnTab: true
             cellWidth: Math.floor(width / Math.max(1, Math.floor(width / 300)))
             cellHeight: 116
             ScrollBar.vertical: AppScrollBar {}
+
+            Keys.onReturnPressed: {
+                if (grid.currentItem) {
+                    root.openRequested(grid.currentItem.toolId)
+                }
+            }
+            Keys.onSpacePressed: {
+                if (grid.currentItem) {
+                    root.openRequested(grid.currentItem.toolId)
+                }
+            }
 
             delegate: Item {
                 id: card
@@ -53,14 +88,15 @@ Item {
                 required property string icon
                 required property string category
 
-                width: grid.cellWidth - 12
-                height: grid.cellHeight - 12
+                width: grid.cellWidth - Theme.space3
+                height: grid.cellHeight - Theme.space3
 
                 Rectangle {
                     anchors.fill: parent
                     radius: Theme.cardRadius
                     color: cardHover.pressed ? Theme.inset
                                              : cardHover.containsMouse ? Theme.raised : Theme.surface
+                    border.width: 1
                     border.color: cardHover.containsMouse ? Theme.ice : Theme.line
 
                     Behavior on color {
@@ -76,18 +112,19 @@ Item {
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 14
-                        spacing: 8
+                        anchors.margins: Theme.space4
+                        anchors.topMargin: Theme.space3
+                        spacing: Theme.space1
 
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 10
+                            spacing: Theme.space2
 
                             Rectangle {
-                                Layout.preferredWidth: 36
-                                Layout.preferredHeight: 36
+                                Layout.preferredWidth: Theme.iconBlock
+                                Layout.preferredHeight: Theme.iconBlock
                                 radius: Theme.radius
-                                color: cardHover.containsMouse ? Theme.iceDeep : Theme.inset
+                                color: cardHover.containsMouse ? Theme.raised : Theme.inset
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -98,8 +135,8 @@ Item {
                                 Label {
                                     anchors.centerIn: parent
                                     text: card.icon
-                                    color: Theme.ice
-                                    font.pixelSize: 16
+                                    color: cardHover.containsMouse ? Theme.ice : Theme.muted
+                                    font.pixelSize: Theme.fontTitle
                                     font.family: Theme.monoFamily
                                 }
                             }
@@ -107,24 +144,9 @@ Item {
                                 Layout.fillWidth: true
                                 text: card.name
                                 color: Theme.text
-                                font.pixelSize: 15
+                                font.pixelSize: Theme.fontBody
                                 font.bold: true
                                 elide: Text.ElideRight
-                            }
-                            Rectangle {
-                                Layout.preferredWidth: categoryLabel.implicitWidth + 12
-                                Layout.preferredHeight: 20
-                                radius: 4
-                                color: Theme.inset
-
-                                Label {
-                                    id: categoryLabel
-
-                                    anchors.centerIn: parent
-                                    text: card.category
-                                    color: Theme.muted
-                                    font.pixelSize: 11
-                                }
                             }
                         }
                         Label {
@@ -132,7 +154,7 @@ Item {
                             Layout.fillHeight: true
                             text: card.description
                             color: Theme.muted
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.fontSmall
                             wrapMode: Text.WordWrap
                             maximumLineCount: 2
                             elide: Text.ElideRight
@@ -146,7 +168,21 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.openRequested(card.toolId)
+                    onClicked: {
+                        grid.currentIndex = card.index
+                        root.openRequested(card.toolId)
+                    }
+                }
+
+                // Keyboard focus ring on the current card.
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    radius: Theme.cardRadius + 3
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Theme.focusRing
+                    visible: card.GridView.isCurrentItem && grid.activeFocus
                 }
             }
         }

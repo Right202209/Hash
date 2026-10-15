@@ -7,8 +7,8 @@ import QtQuick.Controls.Basic
 ScrollBar {
     id: control
 
-    implicitWidth: 12
-    implicitHeight: 12
+    implicitWidth: Theme.space3
+    implicitHeight: Theme.space3
     padding: 3
     visible: control.size < 1.0
 

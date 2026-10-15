@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 
 // AppComboBox themes plain and editable combo boxes (radix tool): inset
-// field, shared focus border, and a popup whose rows use the toolbox
+// field, shared focus border and a popup whose rows use the toolbox
 // surfaces instead of the palette-derived Basic look.
 ComboBox {
     id: control
@@ -14,14 +14,25 @@ ComboBox {
 
     background: Rectangle {
         implicitWidth: 110
-        implicitHeight: 32
+        implicitHeight: Theme.controlHeight
         radius: Theme.radius
         color: Theme.inset
+        border.width: 1
         border.color: control.activeFocus ? Theme.ice : control.hovered ? Theme.muted : Theme.line
         Behavior on border.color {
             ColorAnimation {
                 duration: Theme.fadeMs
             }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: Theme.radius + 3
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.focusRing
+            visible: control.visualFocus
         }
     }
 
@@ -30,7 +41,7 @@ ComboBox {
         y: (control.height - height) / 2
         text: "▾"
         color: control.hovered ? Theme.text : Theme.muted
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSmall
     }
 
     contentItem: TextInput {
@@ -54,10 +65,10 @@ ComboBox {
 
         width: ListView.view ? ListView.view.width : implicitWidth
         highlighted: control.highlightedIndex === index
-        leftPadding: 8
-        rightPadding: 8
-        topPadding: 4
-        bottomPadding: 4
+        leftPadding: Theme.space2
+        rightPadding: Theme.space2
+        topPadding: Theme.space1
+        bottomPadding: Theme.space1
 
         contentItem: Label {
             text: row.modelData
@@ -74,20 +85,21 @@ ComboBox {
     }
 
     popup: Popup {
-        y: control.height + 4
+        y: control.height + Theme.space1
         width: control.width
-        padding: 4
+        padding: Theme.space1
 
         background: Rectangle {
             radius: Theme.cardRadius
             color: Theme.surface
+            border.width: 1
             border.color: Theme.line
         }
 
         contentItem: ListView {
             clip: true
             implicitHeight: contentHeight
-            spacing: 2
+            spacing: Theme.space1
             model: control.popup.visible ? control.delegateModel : null
             currentIndex: control.highlightedIndex
             ScrollBar.vertical: AppScrollBar {}

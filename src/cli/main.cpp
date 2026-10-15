@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
         return hash_core::ExitSuccess;
     }
     if (config.showVersion) {
-        if (!writeOutput(QStringLiteral("hash " HASH_VERSION "\n"))) {
+        if (!writeOutput(hash_core::versionText())) {
             return hash_core::ExitFailure;
         }
         return hash_core::ExitSuccess;
@@ -92,11 +92,16 @@ int main(int argc, char *argv[]) {
     }
 
     QStringList paths;
+    bool pathsUsageError = false;
     if (!hash_core::expandPaths(config.paths,
                                 hash_core::ExpandOptions{config.recursive, config.literal}, &paths,
-                                &error)) {
+                                &error, &pathsUsageError)) {
         writeStream(stderr, error + u'\n');
-        return hash_core::ExitUsage;
+        // A malformed command line (no input, a bad pattern, a directory
+        // without --recursive) is a usage error; an input that merely cannot
+        // be used (missing path, pattern with no match, unreadable tree) is a
+        // file failure. The two get different exit codes (FR-CLI-10, Q-6).
+        return pathsUsageError ? hash_core::ExitUsage : hash_core::ExitFailure;
     }
 
     if (!config.output.isEmpty()) {

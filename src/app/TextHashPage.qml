@@ -11,7 +11,7 @@ Page {
     header: PageHeader {
         icon: "≡"
         title: qsTr("文本哈希")
-        description: qsTr("计算文本的 MD5、SHA 系列等摘要 · 输入以 UTF-8 编码")
+        description: qsTr("计算文本的 MD5、SHA 系列等摘要 · 按 UTF-8 编码、LF 换行计算")
         onBackRequested: {
             if (root.StackView.view) {
                 root.StackView.view.pop()
@@ -19,99 +19,150 @@ Page {
         }
     }
 
+    // The engines encode with QString::toUtf8, so the counter has to match that
+    // and not the UTF-16 code-unit count a plain .length would give.
+    function utf8Length(text) {
+        let bytes = 0
+        for (let i = 0; i < text.length; ++i) {
+            const code = text.charCodeAt(i)
+            if (code < 0x80) {
+                bytes += 1
+            } else if (code < 0x800) {
+                bytes += 2
+            } else if (code >= 0xD800 && code <= 0xDBFF && i + 1 < text.length) {
+                bytes += 4
+                ++i
+            } else {
+                bytes += 3
+            }
+        }
+        return bytes
+    }
+
     function compute() {
         const outcome = TextDigest.hashText(input.text, algorithmChips.selectedNames())
         if (!outcome.ok) {
-            errorLabel.text = outcome.error
             root.results = []
+            input.hasError = true
+            Toast.show(outcome.error, "error")
             return
         }
-        errorLabel.text = ""
+        input.hasError = false
         root.results = outcome.digests
     }
 
-    contentItem: ColumnLayout {
-        spacing: 8
+    contentItem: Flickable {
+        id: scroller
 
-        AlgorithmChips {
-            id: algorithmChips
-
-            Layout.fillWidth: true
-            defaults: ["sha256", "md5"]
-        }
-
-        AppTextArea {
-            id: input
-
-            Layout.fillWidth: true
-            Layout.preferredHeight: 150
-            placeholderText: qsTr("输入要计算摘要的文本")
-            wrapMode: TextArea.Wrap
-            selectByMouse: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            AppButton {
-                text: qsTr("计算")
-                highlighted: true
-                onClicked: root.compute()
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            Label {
-                id: errorLabel
-
-                text: ""
-                color: Theme.danger
-                visible: text !== ""
-            }
-        }
+        contentWidth: width
+        contentHeight: contentColumn.implicitHeight + 2 * Theme.space3
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar {}
 
         ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
+            id: contentColumn
 
-            Repeater {
-                model: root.results
+            x: Theme.pagePadding
+            y: Theme.space3
+            width: scroller.width - 2 * Theme.pagePadding
+            spacing: Theme.space3
 
-                delegate: RowLayout {
-                    required property var modelData
+            AlgorithmChips {
+                id: algorithmChips
 
+                Layout.fillWidth: true
+                defaults: ["sha256", "md5"]
+            }
+
+            AppCard {
+                Layout.fillWidth: true
+                title: qsTr("输入文本")
+
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Theme.space2
 
-                    Label {
-                        Layout.preferredWidth: 110
-                        text: modelData.label
-                        color: Theme.ice
-                        font.pixelSize: 13
-                        font.family: Theme.monoFamily
+                    AppTextArea {
+                        id: input
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Theme.listRowHeight * 3.5
+                        placeholderText: qsTr("输入要计算摘要的文本")
+                        wrapMode: TextArea.Wrap
+                        selectByMouse: true
+                        onTextChanged: hasError = false
                     }
                     Label {
                         Layout.fillWidth: true
-                        text: modelData.value
-                        color: Theme.text
-                        elide: Text.ElideMiddle
-                        font.pixelSize: 13
-                        font.family: Theme.monoFamily
-                    }
-                    AppToolButton {
-                        text: qsTr("⧉")
-                        font.pixelSize: 12
-                        onClicked: Clipboard.copy(modelData.value)
-                                   ? Toast.show(qsTr("摘要已复制"))
-                                   : Toast.show(qsTr("内容过大，无法复制"))
+                        text: qsTr("%1 字符 · %2 字节（UTF-8）").arg(input.text.length).arg(root.utf8Length(input.text))
+                        color: Theme.muted
+                        font.pixelSize: Theme.fontCaption
                     }
                 }
             }
-        }
 
-        Item {
-            Layout.fillHeight: true
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.space2
+
+                AppButton {
+                    text: qsTr("计算")
+                    variant: "primary"
+                    enabled: algorithmChips.selectedNames().length > 0
+                    onClicked: root.compute()
+                }
+                AppButton {
+                    text: qsTr("清空")
+                    variant: "ghost"
+                    enabled: input.text !== ""
+                    onClicked: {
+                        input.text = ""
+                        root.results = []
+                    }
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+            }
+
+            AppCard {
+                Layout.fillWidth: true
+                visible: root.results.length > 0
+                title: qsTr("结果 · %1 个算法").arg(root.results.length)
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.space1
+
+                    Repeater {
+                        model: root.results
+
+                        delegate: AppKeyValueRow {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            label: modelData.label
+                            value: modelData.value
+                            onCopyRequested: text => Clipboard.copy(text) ? Toast.show(qsTr("摘要已复制"), "ok")
+                                                                          : Toast.show(qsTr("内容过大，无法复制"), "error")
+                        }
+                    }
+                }
+            }
+
+            AppEmptyState {
+                Layout.fillWidth: true
+                visible: root.results.length === 0
+                glyph: "≡"
+                title: qsTr("还没有结果")
+                hint: qsTr("输入文本后点击「计算」")
+            }
+
+            Item {
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+            }
         }
     }
 }

@@ -1,15 +1,16 @@
 import QtQuick
 import QtQuick.Controls.Basic
 
-// AppProgressBar themes the batch-progress bar with the shared track and
-// ice accent so busy feedback matches the toolbox look.
+// AppProgressBar themes the batch-progress bar: a slim inset track with a
+// rounded ice fill and no stripes or glow animation, so a long run never
+// costs a repaint per frame.
 ProgressBar {
     id: control
 
     background: Rectangle {
         implicitWidth: 200
         implicitHeight: 6
-        radius: 3
+        radius: Theme.radiusSm
         color: Theme.inset
     }
 
@@ -20,7 +21,7 @@ ProgressBar {
         Rectangle {
             width: control.visualPosition * parent.width
             height: parent.height
-            radius: 3
+            radius: Theme.radiusSm
             color: Theme.ice
         }
     }

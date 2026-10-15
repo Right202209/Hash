@@ -48,6 +48,14 @@ ApplicationWindow {
     // Empty means the overview is showing.
     property string currentToolId: ""
     property string statusText: qsTr("就绪")
+    // statusKind is the Toast type of the current message: "" for the idle
+    // ready state, otherwise "info" | "ok" | "error".
+    property string statusKind: ""
+    // The status dot reuses the queue status colors so the shell and the file
+    // page read states in the same hues.
+    readonly property int statusIndicator: root.statusKind === "error" ? 3
+                                                                       : root.statusKind === "ok" ? 2
+                                                                                                  : root.statusKind === "info" ? 1 : 2
 
     // toolPages maps registry ids to their page file and the initial
     // properties the page is created with.
@@ -149,26 +157,61 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.leftMargin: 14
                     anchors.rightMargin: 14
-                    spacing: 12
+                    spacing: Theme.space2
 
-                    Rectangle {
-                        Layout.preferredWidth: 6
-                        Layout.preferredHeight: 6
-                        radius: 3
-                        color: statusTimer.running ? Theme.ice : Theme.ok
+                    AppStatusDot {
+                        status: root.statusIndicator
+                        Accessible.name: root.statusText
                     }
                     Label {
+                        id: statusLabel
+
                         Layout.fillWidth: true
                         text: root.statusText
                         color: Theme.muted
-                        font.pixelSize: 12
-                        elide: Text.ElideRight
+                        font.pixelSize: Theme.fontSmall
+                        elide: Text.ElideMiddle
+
+                        HoverHandler {
+                            id: statusHover
+                        }
+                        ToolTip.visible: statusHover.hovered && statusLabel.truncated
+                        ToolTip.delay: 600
+                        ToolTip.text: root.statusText
                     }
-                    Label {
-                        text: root.currentToolId === "" ? qsTr("Ctrl+K 快速切换")
-                                                        : qsTr("Ctrl+K 快速切换 · Esc 返回概览")
-                        color: Theme.muted
-                        font.pixelSize: 12
+
+                    // Shortcut legend: the key caps make the two global
+                    // shortcuts discoverable without opening the palette.
+                    RowLayout {
+                        spacing: Theme.space1
+
+                        AppKbd {
+                            text: "Ctrl"
+                        }
+                        AppKbd {
+                            text: "K"
+                        }
+                        Label {
+                            text: qsTr("快速切换")
+                            color: Theme.muted
+                            font.pixelSize: Theme.fontSmall
+                        }
+                        Label {
+                            visible: root.currentToolId !== ""
+                            text: "·"
+                            color: Theme.muted
+                            font.pixelSize: Theme.fontSmall
+                        }
+                        AppKbd {
+                            visible: root.currentToolId !== ""
+                            text: "Esc"
+                        }
+                        Label {
+                            visible: root.currentToolId !== ""
+                            text: qsTr("返回概览")
+                            color: Theme.muted
+                            font.pixelSize: Theme.fontSmall
+                        }
                     }
                 }
             }
@@ -184,8 +227,9 @@ ApplicationWindow {
     Connections {
         target: Toast
 
-        function onShow(message) {
+        function onShow(message, kind) {
             root.statusText = message
+            root.statusKind = kind
             statusTimer.restart()
         }
     }
@@ -194,7 +238,10 @@ ApplicationWindow {
         id: statusTimer
 
         interval: 2600
-        onTriggered: root.statusText = qsTr("就绪")
+        onTriggered: {
+            root.statusText = qsTr("就绪")
+            root.statusKind = ""
+        }
     }
 
     Shortcut {

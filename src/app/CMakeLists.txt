@@ -40,6 +40,12 @@ qt_add_qml_module(hash-gui
         AppComboBox.qml
         AppSpinBox.qml
         AppProgressBar.qml
+        AppCard.qml
+        AppKeyValueRow.qml
+        AppKbd.qml
+        AppStatusDot.qml
+        AppBanner.qml
+        AppEmptyState.qml
         AlgorithmChips.qml
         FileHashPage.qml
         TextHashPage.qml

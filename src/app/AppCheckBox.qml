@@ -7,17 +7,18 @@ import QtQuick.Controls.Basic
 CheckBox {
     id: control
 
-    spacing: 8
+    spacing: Theme.space2
 
     indicator: Rectangle {
         implicitWidth: 18
         implicitHeight: 18
         x: control.leftPadding
         y: control.topPadding + (control.availableHeight - height) / 2
-        radius: Theme.radius - 2
+        radius: Theme.radiusSm
         color: control.checked ? Theme.iceDeep
                                : control.down ? Theme.canvas
                                               : control.hovered ? Theme.raised : Theme.inset
+        border.width: 1
         border.color: control.checked ? Theme.ice
                                       : control.down || control.hovered ? Theme.muted : Theme.line
         Behavior on color {
@@ -36,7 +37,17 @@ CheckBox {
             text: "✓"
             visible: control.checked
             color: Theme.text
-            font.pixelSize: 12
+            font.pixelSize: Theme.fontSmall
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: Theme.radiusSm + 3
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.focusRing
+            visible: control.visualFocus
         }
     }
 

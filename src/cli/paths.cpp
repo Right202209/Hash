@@ -162,6 +162,18 @@ QString cleanGlobPath(const QString &path) {
     return path.left(end);
 }
 
+// usageError classifies one expansion failure: true means the command line
+// itself was wrong (exit code 2), false means the inputs were well-formed but
+// unusable (exit code 1, "a file failed"). The pattern and directory messages
+// reach this point already prefixed with the input, so the classification
+// matches the trailing phrase that expandPath appends.
+bool usageError(const QString &error) {
+    return error == QString::fromLatin1(kNoInputMessage) ||
+           error.endsWith(QString::fromLatin1(kBadPatternMessage)) ||
+           error.endsWith(
+               QStringLiteral(" is a directory; use --recursive to include its files"));
+}
+
 QString joinDirEntry(const QString &dir, const QString &name) {
     if (dir == QStringLiteral(".")) {
         return name;
@@ -373,9 +385,15 @@ bool globMatch(const QString &pattern, const QString &name, bool *badPattern) {
 }
 
 bool expandPaths(const QStringList &inputs, const ExpandOptions &options, QStringList *paths,
-                 QString *error) {
+                 QString *error, bool *usageErrorOut) {
+    if (usageErrorOut != nullptr) {
+        *usageErrorOut = false;
+    }
     if (inputs.isEmpty()) {
         *error = QString::fromLatin1(kNoInputMessage);
+        if (usageErrorOut != nullptr) {
+            *usageErrorOut = true;
+        }
         return false;
     }
     QSet<QString> seen;
@@ -383,6 +401,9 @@ bool expandPaths(const QStringList &inputs, const ExpandOptions &options, QStrin
     for (const QString &input : inputs) {
         QStringList matches;
         if (!expandPath(input, options, &matches, error)) {
+            if (usageErrorOut != nullptr && usageError(*error)) {
+                *usageErrorOut = true;
+            }
             return false;
         }
         for (const QString &match : matches) {

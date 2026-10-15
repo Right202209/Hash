@@ -1,6 +1,7 @@
 #include "cli/options.h"
 
 #include "common/quoting.h"
+#include "core/batch.h"
 #include "core/hasher.h"
 #include "core/registry.h"
 
@@ -35,7 +36,7 @@ constexpr const char *kUsageFlags =
     "  -version\n"
     "    \tprint the version and exit\n"
     "  -workers int\n"
-    "    \tnumber of files processed concurrently (max 64)";
+    "    \tnumber of files processed concurrently (max ";
 
 // splitAlgorithmList normalizes a comma-separated --algorithm value the way
 // the previous Go implementation did: each part is trimmed and lower-cased.
@@ -76,8 +77,11 @@ bool parseInt(const QString &value, int *out) {
 } // namespace
 
 QString usageText() {
-    return QStringLiteral("Usage of hash:\n") + QString::fromLatin1(kUsageFlags) + u'\n';
+    return QStringLiteral("Usage of hash:\n") + QString::fromLatin1(kUsageFlags) +
+           QString::number(hash_core::kMaxWorkers) + u")\n";
 }
+
+QString versionText() { return QStringLiteral("hash " HASH_VERSION "\n"); }
 
 bool parseArgs(const QStringList &args, Config *config, QString *error) {
     QStringList paths;

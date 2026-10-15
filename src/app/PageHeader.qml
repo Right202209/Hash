@@ -3,7 +3,9 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 // PageHeader is the shared tool page header: glyph, title and description.
-// The sidebar shell switches tools directly, so the back button is hidden by
+// The rule underneath spans the content area only (inset by pagePadding), and
+// the description stays on one line with the full text in a tooltip. The
+// sidebar shell switches tools directly, so the back button is hidden by
 // default; showBack restores it for a page hosted in a StackView, which wires
 // backRequested to that view.
 Item {
@@ -22,6 +24,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.pagePadding
+        anchors.rightMargin: Theme.pagePadding
         height: 1
         color: Theme.line
     }
@@ -30,26 +34,28 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: root.showBack ? 10 : Theme.pagePadding
         anchors.rightMargin: Theme.pagePadding
-        spacing: 12
+        spacing: Theme.space3
 
         AppToolButton {
             visible: root.showBack
             text: qsTr("←")
-            font.pixelSize: 18
+            tip: qsTr("返回")
+            font.pixelSize: Theme.fontTitle
             onClicked: root.backRequested()
         }
         Rectangle {
-            Layout.preferredWidth: 38
-            Layout.preferredHeight: 38
+            Layout.preferredWidth: Theme.iconBlockLg
+            Layout.preferredHeight: Theme.iconBlockLg
             radius: Theme.radius
             color: Theme.inset
+            border.width: 1
             border.color: Theme.line
 
             Label {
                 anchors.centerIn: parent
                 text: root.icon
                 color: Theme.ice
-                font.pixelSize: 18
+                font.pixelSize: Theme.fontTitle
                 font.family: Theme.monoFamily
             }
         }
@@ -60,13 +66,24 @@ Item {
             Label {
                 text: root.title
                 color: Theme.text
-                font.pixelSize: 18
+                font.pixelSize: Theme.fontTitle
                 font.bold: true
             }
             Label {
+                id: descriptionLabel
+
+                Layout.fillWidth: true
                 text: root.description
                 color: Theme.muted
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSmall
+                elide: Text.ElideRight
+
+                HoverHandler {
+                    id: descriptionHover
+                }
+                ToolTip.visible: descriptionHover.hovered && descriptionLabel.truncated
+                ToolTip.delay: 600
+                ToolTip.text: root.description
             }
         }
     }

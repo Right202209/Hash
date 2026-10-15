@@ -83,6 +83,38 @@ class TestPaths : public QObject {
         QVERIFY(paths.at(2).endsWith(QStringLiteral("z.txt")));
     }
 
+    void classifiesExitCodeByFailureKind() {
+        bool usage = false;
+        QStringList paths;
+        QString error;
+
+        // Leading check: no input is a usage error.
+        QVERIFY(!hash_core::expandPaths({}, {}, &paths, &error, &usage));
+        QVERIFY(usage);
+
+        // A directory without --recursive is a usage error.
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        usage = false;
+        QVERIFY(!hash_core::expandPaths({directory.path()}, {}, &paths, &error, &usage));
+        QVERIFY(usage);
+
+        // A nonexistent path is a runtime failure, not a usage error.
+        const QStringList missing = {directory.path() + QStringLiteral("/nope.txt")};
+        usage = false;
+        QVERIFY(!hash_core::expandPaths(missing, {}, &paths, &error, &usage));
+        QVERIFY(!usage);
+
+        // A pattern with no matches is a runtime failure, not a usage error.
+        const QStringList unmatched = {directory.path() + QStringLiteral("/*.nothing")};
+        usage = false;
+        QVERIFY(!hash_core::expandPaths(unmatched, {}, &paths, &error, &usage));
+        QVERIFY(!usage);
+
+        // The classification out-parameter stays optional.
+        QVERIFY(!hash_core::expandPaths({}, {}, &paths, &error));
+    }
+
     void globMatchBasics() {
         bool badPattern = false;
         QVERIFY(hash_core::globMatch(QStringLiteral("*"), QStringLiteral("a.txt"), &badPattern));

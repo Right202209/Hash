@@ -71,6 +71,12 @@ class TestCompare : public QObject {
                                             &error));
     }
 
+    void emptyComparisonIsNotExact() {
+        const hash_core::CompareSummary summary = hash_core::compareRecords({}, {});
+        QCOMPARE(summary.matches, 0);
+        QVERIFY(!summary.exact);
+    }
+
     void compareMissingUnexpectedMismatchAndDuplicate() {
         using hash_core::CompareRecord;
         const QVector<CompareRecord> expected = {

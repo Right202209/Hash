@@ -29,10 +29,13 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        anchors.rightMargin: 13
-        spacing: 12
+        anchors.leftMargin: Theme.space3
+        anchors.topMargin: Theme.space3
+        anchors.rightMargin: Theme.space3
+        anchors.bottomMargin: Theme.space3
+        spacing: Theme.space3
 
+        // Brand row: clicking returns to the overview.
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 44
@@ -48,9 +51,9 @@ Rectangle {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 10
+                anchors.leftMargin: Theme.space2
+                anchors.rightMargin: Theme.space2
+                spacing: Theme.space2
 
                 Rectangle {
                     Layout.preferredWidth: 30
@@ -62,7 +65,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "#"
                         color: Theme.ice
-                        font.pixelSize: 18
+                        font.pixelSize: Theme.fontTitle
                         font.bold: true
                         font.family: Theme.monoFamily
                     }
@@ -74,13 +77,13 @@ Rectangle {
                     Label {
                         text: "Hash"
                         color: Theme.text
-                        font.pixelSize: 16
+                        font.pixelSize: Theme.fontBody
                         font.bold: true
                     }
                     Label {
                         text: qsTr("工具箱 · 概览")
                         color: Theme.muted
-                        font.pixelSize: 11
+                        font.pixelSize: Theme.fontCaption
                     }
                 }
             }
@@ -95,11 +98,13 @@ Rectangle {
             }
         }
 
+        // Search field: opens the command palette.
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
+            Layout.preferredHeight: Theme.controlHeight
             radius: Theme.radius
             color: searchHover.containsMouse ? Theme.raised : Theme.inset
+            border.width: 1
             border.color: searchHover.containsMouse ? Theme.ice : Theme.line
 
             Behavior on border.color {
@@ -110,31 +115,29 @@ Rectangle {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 6
-                spacing: 6
+                anchors.leftMargin: Theme.space2
+                anchors.rightMargin: Theme.space1
+                spacing: Theme.space1
 
                 Label {
-                    Layout.fillWidth: true
-                    text: qsTr("搜索工具…")
-                    color: Theme.muted
-                    font.pixelSize: 13
+                    text: "⌕"
+                    color: searchHover.containsMouse ? Theme.ice : Theme.muted
+                    font.pixelSize: Theme.fontSmall
                 }
-                Rectangle {
-                    Layout.preferredWidth: kbdLabel.implicitWidth + 10
-                    Layout.preferredHeight: 20
-                    radius: 4
-                    color: Theme.canvas
-                    border.color: Theme.line
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("搜索工具")
+                    color: Theme.muted
+                    font.pixelSize: Theme.fontSmall
+                }
+                RowLayout {
+                    spacing: Theme.space1
 
-                    Label {
-                        id: kbdLabel
-
-                        anchors.centerIn: parent
-                        text: "Ctrl K"
-                        color: Theme.muted
-                        font.pixelSize: 11
-                        font.family: Theme.monoFamily
+                    AppKbd {
+                        text: "Ctrl"
+                    }
+                    AppKbd {
+                        text: "K"
                     }
                 }
             }
@@ -155,7 +158,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 2
+            spacing: Theme.space1
             model: Tools
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: AppScrollBar {}
@@ -165,12 +168,12 @@ Rectangle {
                 required property string section
 
                 width: ListView.view.width
-                topPadding: 12
-                bottomPadding: 4
-                leftPadding: 8
+                topPadding: Theme.space3
+                bottomPadding: Theme.space1
+                leftPadding: Theme.space2
                 text: section
                 color: Theme.muted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontCaption
                 font.letterSpacing: 1
             }
 
@@ -184,7 +187,7 @@ Rectangle {
                 readonly property bool active: toolId === root.currentToolId
 
                 width: ListView.view.width
-                height: 34
+                height: Theme.rowHeight
                 radius: Theme.radius
                 color: active ? Theme.iceDeep : rowHover.containsMouse ? Theme.raised : "transparent"
 
@@ -198,31 +201,31 @@ Rectangle {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: 3
-                    height: 16
-                    radius: 2
+                    height: 18
+                    radius: Theme.radiusSm
                     color: Theme.ice
                     visible: row.active
                 }
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 8
-                    spacing: 10
+                    anchors.leftMargin: Theme.space2
+                    anchors.rightMargin: Theme.space2
+                    spacing: Theme.space3
 
                     Label {
-                        Layout.preferredWidth: 24
+                        Layout.preferredWidth: Theme.space5
                         horizontalAlignment: Text.AlignHCenter
                         text: row.icon
                         color: row.active ? Theme.text : Theme.ice
-                        font.pixelSize: 14
+                        font.pixelSize: Theme.fontSmall
                         font.family: Theme.monoFamily
                     }
                     Label {
                         Layout.fillWidth: true
                         text: row.name
                         color: Theme.text
-                        font.pixelSize: 14
+                        font.pixelSize: Theme.fontBody
                         elide: Text.ElideRight
                     }
                 }

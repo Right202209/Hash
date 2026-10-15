@@ -42,6 +42,11 @@ bool parseArgs(const QStringList &args, Config *config, QString *error);
 // usageText renders the flag summary printed on parse errors and -h.
 QString usageText();
 
+// versionText renders the line printed by --version. HASH_VERSION is its only
+// input, and the GUI's window/app version is set from the same macro, so the
+// two front ends cannot drift apart (FR-X-4).
+QString versionText();
+
 // selectAlgorithms resolves config into a validated, normalized algorithm
 // list.
 bool selectAlgorithms(const Config &config, QStringList *selected, QString *error);

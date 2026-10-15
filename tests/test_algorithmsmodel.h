@@ -22,6 +22,8 @@ class TestAlgorithmsModel : public QObject {
                      specs.at(row).label);
             QCOMPARE(model.data(index, hash_core::AlgorithmsModel::CategoryRole).toString(),
                      specs.at(row).category);
+            QCOMPARE(model.data(index, hash_core::AlgorithmsModel::SecureRole).toBool(),
+                     specs.at(row).secure);
         }
     }
 
@@ -31,6 +33,7 @@ class TestAlgorithmsModel : public QObject {
         QCOMPARE(roles.value(hash_core::AlgorithmsModel::NameRole), QByteArray("name"));
         QCOMPARE(roles.value(hash_core::AlgorithmsModel::LabelRole), QByteArray("label"));
         QCOMPARE(roles.value(hash_core::AlgorithmsModel::CategoryRole), QByteArray("category"));
+        QCOMPARE(roles.value(hash_core::AlgorithmsModel::SecureRole), QByteArray("secure"));
     }
 
     void rejectsInvalidIndexesAndRoles() {

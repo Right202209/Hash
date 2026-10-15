@@ -413,8 +413,10 @@ CompareSummary compareRecords(const QVector<CompareRecord> &expected,
             }
         }
     }
-    summary.exact = summary.mismatches == 0 && summary.missing == 0 && summary.unexpected == 0 &&
-                    summary.duplicates == 0;
+    // exact requires at least one match: an empty comparison reports every
+    // record as missing and must not look successful (Q-8).
+    summary.exact = summary.matches > 0 && summary.mismatches == 0 && summary.missing == 0 &&
+                    summary.unexpected == 0 && summary.duplicates == 0;
     return summary;
 }
 

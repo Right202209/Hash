@@ -19,8 +19,9 @@ struct CompareRecord {
 };
 
 // CompareSummary counts how an actual listing compares with an expected one.
-// exact is true only when every expected record matched and neither side had
-// extras or duplicates.
+// exact is true only when at least one record matched and neither side had
+// mismatches, missing, extra or duplicate records; an empty comparison is
+// never exact.
 struct CompareSummary {
     int matches = 0;
     int mismatches = 0;

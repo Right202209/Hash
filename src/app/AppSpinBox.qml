@@ -14,14 +14,25 @@ SpinBox {
 
     background: Rectangle {
         implicitWidth: 110
-        implicitHeight: 32
+        implicitHeight: Theme.controlHeight
         radius: Theme.radius
         color: Theme.inset
+        border.width: 1
         border.color: control.activeFocus ? Theme.ice : control.hovered ? Theme.muted : Theme.line
         Behavior on border.color {
             ColorAnimation {
                 duration: Theme.fadeMs
             }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: Theme.radius + 3
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.focusRing
+            visible: control.visualFocus
         }
     }
 
@@ -43,7 +54,7 @@ SpinBox {
         y: (parent.height - height) / 2
         implicitWidth: 24
         implicitHeight: 24
-        radius: Theme.radius
+        radius: Theme.radiusSm
         color: control.up.pressed ? Theme.inset : control.up.hovered ? Theme.raised : "transparent"
 
         Label {
@@ -51,7 +62,7 @@ SpinBox {
             text: "▲"
             color: control.up.enabled
                    && (control.up.hovered || control.up.pressed) ? Theme.text : Theme.muted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontCaption
         }
     }
 
@@ -60,7 +71,7 @@ SpinBox {
         y: (parent.height - height) / 2
         implicitWidth: 24
         implicitHeight: 24
-        radius: Theme.radius
+        radius: Theme.radiusSm
         color: control.down.pressed ? Theme.inset : control.down.hovered ? Theme.raised : "transparent"
 
         Label {
@@ -68,7 +79,7 @@ SpinBox {
             text: "▼"
             color: control.down.enabled
                    && (control.down.hovered || control.down.pressed) ? Theme.text : Theme.muted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontCaption
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "core/batch.h"
 
 #include <QFile>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -141,5 +142,52 @@ class TestBatch : public QObject {
             }
         }
         QVERIFY(sawFirstFileCompleted);
+    }
+
+    void reportsEachFileImmediatelyAndExactlyOnce() {
+        QVector<hash_core::FileRequest> requests;
+        for (int index = 0; index < 8; ++index) {
+            const QString path =
+                writeFile(QByteArray("finished") + QByteArray::number(index) + ".bin",
+                          QByteArray("payload"));
+            requests.append(hash_core::FileRequest{path, {QStringLiteral("sha256")}});
+        }
+
+        QSet<int> reported;
+        std::mutex reportedMutex;
+        hash_core::BatchOptions options;
+        options.workers = 4;
+        options.fileFinished = [&reported, &reportedMutex](int index,
+                                                           const hash_core::FileResult &) {
+            std::lock_guard<std::mutex> lock(reportedMutex);
+            reported.insert(index);
+        };
+        const QVector<hash_core::FileResult> results = hash_core::hashFiles(requests, options);
+        QCOMPARE(results.size(), requests.size());
+        // Even with concurrent workers every request is reported once, and only
+        // for a final result (FR-BATCH-8).
+        QCOMPARE(reported.size(), requests.size());
+        for (int index = 0; index < requests.size(); ++index) {
+            QVERIFY(reported.contains(index));
+        }
+    }
+
+    void truncatesWorkersAboveTheMaximum() {
+        QVector<hash_core::FileRequest> requests;
+        requests.reserve(hash_core::kMaxWorkers + 16);
+        for (int index = 0; index < hash_core::kMaxWorkers + 16; ++index) {
+            const QString path =
+                writeFile(QByteArray("wide") + QByteArray::number(index) + ".bin",
+                          QByteArray("payload"));
+            requests.append(hash_core::FileRequest{path, {QStringLiteral("sha256")}});
+        }
+        hash_core::BatchOptions options;
+        // A value above the ceiling is truncated, never rejected (FR-BATCH-2).
+        options.workers = hash_core::kMaxWorkers + 16;
+        const QVector<hash_core::FileResult> results = hash_core::hashFiles(requests, options);
+        QCOMPARE(results.size(), requests.size());
+        for (const hash_core::FileResult &result : results) {
+            QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
+        }
     }
 };

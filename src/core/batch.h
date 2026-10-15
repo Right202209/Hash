@@ -6,6 +6,10 @@
 
 namespace hash_core {
 
+// kMaxWorkers is the hard ceiling on batch concurrency. --workers values above
+// it are truncated, not rejected (FR-BATCH-2, FR-CLI-4).
+inline constexpr int kMaxWorkers = 64;
+
 // BatchOptions configures hashFiles. workers defaults to
 // min(4, ideal thread count), is capped at 64, and progress, when set, may be called
 // concurrently. cancel is polled between files and between reads; setting it

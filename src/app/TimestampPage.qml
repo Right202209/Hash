@@ -3,11 +3,15 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import HashTools
 
+// Timestamp page: two conversion directions, each an AppCard with its own
+// input row and results. Both directions share the "now" shortcut.
 Page {
     id: root
 
     property var stampOutcome: null
     property var dateOutcome: null
+    property string stampError: ""
+    property string dateError: ""
 
     header: PageHeader {
         icon: "⏱"
@@ -23,28 +27,28 @@ Page {
     function convertStamp() {
         const value = Number(stampInput.text)
         if (stampInput.text.trim() === "" || isNaN(value)) {
-            stampError.text = qsTr("请输入数字时间戳")
+            root.stampError = qsTr("请输入数字时间戳")
             root.stampOutcome = null
             return
         }
         const outcome = Timestamp.timestampToDate(Math.trunc(value), msRadio.checked)
         if (!outcome.ok) {
-            stampError.text = outcome.error
+            root.stampError = outcome.error
             root.stampOutcome = null
             return
         }
-        stampError.text = ""
+        root.stampError = ""
         root.stampOutcome = outcome
     }
 
     function convertDate() {
         const outcome = Timestamp.dateToTimestamp(dateInput.text)
         if (!outcome.ok) {
-            dateError.text = outcome.error
+            root.dateError = outcome.error
             root.dateOutcome = null
             return
         }
-        dateError.text = ""
+        root.dateError = ""
         root.dateOutcome = outcome
     }
 
@@ -53,7 +57,7 @@ Page {
         stampInput.text = String(outcome.seconds)
         root.stampOutcome = outcome
         dateInput.text = outcome.local
-        dateError.text = ""
+        root.dateError = ""
         root.dateOutcome = {
             "ok": true,
             "seconds": outcome.seconds,
@@ -61,178 +65,190 @@ Page {
         }
     }
 
-    contentItem: ColumnLayout {
-        spacing: 10
+    contentItem: Flickable {
+        id: scroller
 
-        GroupBox {
-            Layout.fillWidth: true
-            title: qsTr("时间戳 → 日期时间")
+        contentWidth: width
+        contentHeight: contentColumn.implicitHeight + 2 * Theme.space3
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar {}
 
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 8
+        ColumnLayout {
+            id: contentColumn
 
-                RowLayout {
+            x: Theme.pagePadding
+            y: Theme.space3
+            width: scroller.width - 2 * Theme.pagePadding
+            spacing: Theme.space3
+
+            AppCard {
+                Layout.fillWidth: true
+                title: qsTr("时间戳 → 日期时间")
+
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Theme.space2
 
-                    AppTextField {
-                        id: stampInput
-
-                        Layout.preferredWidth: 220
-                        placeholderText: qsTr("例如 946684800")
-                        selectByMouse: true
-                        font.family: Theme.monoFamily
-                        onAccepted: root.convertStamp()
-                    }
-                    AppRadioButton {
-                        id: secondsRadio
-
-                        text: qsTr("秒")
-                        checked: true
-                    }
-                    AppRadioButton {
-                        id: msRadio
-
-                        text: qsTr("毫秒")
-                    }
-                    AppButton {
-                        text: qsTr("转换")
-                        highlighted: true
-                        onClicked: root.convertStamp()
-                    }
-                    AppButton {
-                        text: qsTr("当前时间")
-                        onClicked: root.fillNow()
-                    }
-                    Label {
-                        id: stampError
-
-                        text: ""
-                        color: Theme.danger
-                        visible: text !== ""
-                    }
-                }
-
-                Repeater {
-                    model: root.stampOutcome ? [{
-                            "label": qsTr("本地"),
-                            "value": root.stampOutcome.local
-                                + qsTr("  （%1 毫秒）").arg(root.stampOutcome.milliseconds)
-                        }, {
-                            "label": qsTr("UTC"),
-                            "value": root.stampOutcome.utc
-                        }, {
-                            "label": qsTr("ISO"),
-                            "value": root.stampOutcome.iso
-                        }] : []
-
-                    delegate: RowLayout {
-                        required property var modelData
-
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: Theme.space2
 
-                        Label {
-                            Layout.preferredWidth: 44
-                            text: modelData.label
-                            color: Theme.ice
-                        }
-                        Label {
-                            Layout.fillWidth: true
-                            text: modelData.value
-                            color: Theme.text
-                            font.pixelSize: 13
+                        AppTextField {
+                            id: stampInput
+
+                            Layout.preferredWidth: 200
+                            placeholderText: qsTr("例如 946684800")
+                            selectByMouse: true
+                            hasError: root.stampError !== ""
                             font.family: Theme.monoFamily
+                            onTextChanged: root.stampError = ""
+                            onAccepted: root.convertStamp()
                         }
-                        AppToolButton {
-                            text: qsTr("⧉")
-                            font.pixelSize: 12
-                            onClicked: Clipboard.copy(modelData.value)
-                                       ? Toast.show(qsTr("已复制"))
-                                       : Toast.show(qsTr("内容过大，无法复制"))
+                        AppRadioButton {
+                            id: secondsRadio
+
+                            text: qsTr("秒")
+                            checked: true
+                        }
+                        AppRadioButton {
+                            id: msRadio
+
+                            text: qsTr("毫秒")
+                        }
+                        AppButton {
+                            text: qsTr("转换")
+                            variant: "primary"
+                            enabled: stampInput.text !== ""
+                            onClicked: root.convertStamp()
+                        }
+                        AppButton {
+                            text: qsTr("当前时间")
+                            variant: "ghost"
+                            onClicked: root.fillNow()
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    AppBanner {
+                        Layout.fillWidth: true
+                        kind: "danger"
+                        title: root.stampError
+                        visible: root.stampError !== ""
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.space1
+                        visible: root.stampOutcome !== null
+
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("本地")
+                            value: root.stampOutcome !== null ? root.stampOutcome.local : ""
+                            onCopyRequested: text => root.copy(text)
+                        }
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("毫秒")
+                            value: root.stampOutcome !== null ? String(root.stampOutcome.milliseconds) : ""
+                            onCopyRequested: text => root.copy(text)
+                        }
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("UTC")
+                            value: root.stampOutcome !== null ? root.stampOutcome.utc : ""
+                            onCopyRequested: text => root.copy(text)
+                        }
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("ISO 8601")
+                            value: root.stampOutcome !== null ? root.stampOutcome.iso : ""
+                            onCopyRequested: text => root.copy(text)
                         }
                     }
                 }
             }
-        }
 
-        GroupBox {
-            Layout.fillWidth: true
-            title: qsTr("日期时间 → 时间戳")
+            AppCard {
+                Layout.fillWidth: true
+                title: qsTr("日期时间 → 时间戳")
 
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 8
-
-                RowLayout {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Theme.space2
 
-                    AppTextField {
-                        id: dateInput
-
-                        Layout.preferredWidth: 260
-                        placeholderText: qsTr("2026-01-02 03:04:05 或 ISO 8601")
-                        selectByMouse: true
-                        font.family: Theme.monoFamily
-                        onAccepted: root.convertDate()
-                    }
-                    AppButton {
-                        text: qsTr("转换")
-                        highlighted: true
-                        onClicked: root.convertDate()
-                    }
-                    Label {
-                        id: dateError
-
-                        text: ""
-                        color: Theme.danger
-                        visible: text !== ""
-                    }
-                }
-
-                Repeater {
-                    model: root.dateOutcome ? [{
-                            "label": qsTr("秒"),
-                            "value": String(root.dateOutcome.seconds)
-                        }, {
-                            "label": qsTr("毫秒"),
-                            "value": String(root.dateOutcome.milliseconds)
-                        }] : []
-
-                    delegate: RowLayout {
-                        required property var modelData
-
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: Theme.space2
 
-                        Label {
-                            Layout.preferredWidth: 44
-                            text: modelData.label
-                            color: Theme.ice
-                        }
-                        Label {
-                            Layout.fillWidth: true
-                            text: modelData.value
-                            color: Theme.text
-                            font.pixelSize: 13
+                        AppTextField {
+                            id: dateInput
+
+                            Layout.preferredWidth: 280
+                            placeholderText: qsTr("2026-01-02 03:04:05 或 ISO 8601")
+                            selectByMouse: true
+                            hasError: root.dateError !== ""
                             font.family: Theme.monoFamily
+                            onTextChanged: root.dateError = ""
+                            onAccepted: root.convertDate()
                         }
-                        AppToolButton {
-                            text: qsTr("⧉")
-                            font.pixelSize: 12
-                            onClicked: Clipboard.copy(modelData.value)
-                                       ? Toast.show(qsTr("已复制"))
-                                       : Toast.show(qsTr("内容过大，无法复制"))
+                        AppButton {
+                            text: qsTr("转换")
+                            variant: "primary"
+                            enabled: dateInput.text !== ""
+                            onClicked: root.convertDate()
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    AppBanner {
+                        Layout.fillWidth: true
+                        kind: "danger"
+                        title: root.dateError
+                        visible: root.dateError !== ""
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.space1
+                        visible: root.dateOutcome !== null
+
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("秒")
+                            value: root.dateOutcome !== null ? String(root.dateOutcome.seconds) : ""
+                            onCopyRequested: text => root.copy(text)
+                        }
+                        AppKeyValueRow {
+                            Layout.fillWidth: true
+                            label: qsTr("毫秒")
+                            value: root.dateOutcome !== null ? String(root.dateOutcome.milliseconds) : ""
+                            onCopyRequested: text => root.copy(text)
                         }
                     }
                 }
             }
-        }
 
-        Item {
-            Layout.fillHeight: true
+            Item {
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+            }
+        }
+    }
+
+    function copy(text) {
+        if (text === "") {
+            return
+        }
+        if (Clipboard.copy(text)) {
+            Toast.show(qsTr("已复制"), "ok")
+        } else {
+            Toast.show(qsTr("内容过大，无法复制"), "error")
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "common/atomicfile.h"
 #include "common/fspath.h"
 
+#include <QDir>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -84,5 +85,32 @@ class TestAtomicFile : public QObject {
         QFile verify(output);
         QVERIFY(verify.open(QIODevice::ReadOnly));
         QCOMPARE(verify.readAll(), QByteArray("replaced"));
+    }
+
+    void reportsRealReasonWhenTemporaryFileCannotBeCreated() {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        // A missing parent directory makes creating the temporary sibling
+        // fail; the message must name the failing step and the real temporary
+        // path rather than a generic failure (FR-ATOMIC-5).
+        const QString output = directory.path() + QStringLiteral("/missing/sub/out.txt");
+        const QString error = hash_core::writeAtomicFile(output, {}, QByteArray("x"));
+        QVERIFY2(!error.isEmpty(), "a missing output directory was not reported");
+        QVERIFY2(error.startsWith(QStringLiteral("create temporary output: open ")),
+                 qPrintable(error));
+        QVERIFY2(error.contains(QStringLiteral(".hash-output-")), qPrintable(error));
+    }
+
+    void reportsRealReasonWhenRenameFails() {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        // An existing directory as the destination lets the temporary file be
+        // written but makes the final rename fail; the real reason survives
+        // (FR-ATOMIC-5).
+        const QString output = directory.path() + QStringLiteral("/occupied");
+        QVERIFY(QDir().mkpath(output));
+        const QString error = hash_core::writeAtomicFile(output, {}, QByteArray("x"));
+        QVERIFY2(!error.isEmpty(), "renaming onto a directory was accepted");
+        QVERIFY2(error.startsWith(QStringLiteral("rename temporary output: ")), qPrintable(error));
     }
 };

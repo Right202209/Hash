@@ -6,7 +6,7 @@ import QtQuick.Controls.Basic
 RadioButton {
     id: control
 
-    spacing: 8
+    spacing: Theme.space2
 
     indicator: Rectangle {
         implicitWidth: 18
@@ -17,6 +17,7 @@ RadioButton {
         color: control.checked ? Theme.iceDeep
                                : control.down ? Theme.canvas
                                               : control.hovered ? Theme.raised : Theme.inset
+        border.width: 1
         border.color: control.checked ? Theme.ice
                                       : control.down || control.hovered ? Theme.muted : Theme.line
         Behavior on color {
@@ -37,6 +38,16 @@ RadioButton {
             radius: 4
             color: Theme.ice
             visible: control.checked
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -3
+            radius: width / 2
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.focusRing
+            visible: control.visualFocus
         }
     }
 

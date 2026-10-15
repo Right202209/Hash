@@ -63,6 +63,8 @@ QString jsonEscape(const QString &value) {
 
 // row is the flattened, per-algorithm view used by the text and TSV
 // encoders. A failed file produces a single row with a non-empty error.
+// changed mirrors Result::changed so the text encoder can warn once per file
+// that was modified while it was being read (FR-HASH-3, Q-3).
 struct Row {
     QString algorithm;
     QString digest;
@@ -70,6 +72,7 @@ struct Row {
     QString error;
     qint64 size = 0;
     QDateTime modified;
+    bool changed = false;
 };
 
 QVector<Row> rowsFromResults(const QVector<FileResult> &results, const QStringList &algorithms) {
@@ -89,19 +92,31 @@ QVector<Row> rowsFromResults(const QVector<FileResult> &results, const QStringLi
             row.path = item.result.path;
             row.size = item.result.size;
             row.modified = item.result.modified;
+            row.changed = item.result.changed;
             rows.append(row);
         }
     }
     return rows;
 }
 
+// The rows of one file are always adjacent, so the previous path tracks file
+// boundaries and the warning is emitted once per changed file.
 void writeText(QString *output, const QVector<Row> &rows, const FormatOptions &options) {
+    QString lastPath;
     for (const Row &item : rows) {
         if (!item.error.isEmpty()) {
             *output += QStringLiteral("ERROR\t") + goQuote(item.path) + u'\t' +
                        goQuote(item.error) + u'\n';
             continue;
         }
+        // A file modified while it was hashing already carries honest digest
+        // values; the warning is informational and does not change the exit
+        // code, and the comparison parser skips WARNING: lines (FR-CMP-2).
+        if (item.changed && item.path != lastPath) {
+            *output += QStringLiteral("WARNING: file changed while hashing: ") +
+                       goQuote(item.path) + u'\n';
+        }
+        lastPath = item.path;
         *output += item.algorithm + u'\t' + item.digest + u'\t' + goQuote(item.path);
         if (options.showSize) {
             *output += QStringLiteral("\tsize=") + QString::number(item.size);
@@ -170,6 +185,11 @@ void writeJson(QString *output, const QVector<FileResult> &results, const Format
                 options.utc ? item.result.modified.toUTC() : item.result.modified;
             fields.append(QStringLiteral("    \"modified\": \"") +
                           jsonEscape(formatTime(modified, false)) + u'"');
+        }
+        // A file modified while hashing keeps its computed digests; changed is
+        // a flag next to the digests, never a replacement for them.
+        if (!failed && item.result.changed) {
+            fields.append(QStringLiteral("    \"changed\": true"));
         }
         if (!failed) {
             // encoding/json sorts map keys, so the digests object is sorted
